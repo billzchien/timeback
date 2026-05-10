@@ -1480,7 +1480,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div style={{ display: "flex", gap: 20, padding: "0 20px", position: "relative" }}>
               {[
-                { key: "write", label: "DRAFT" },
+                { key: "write", label: "PLAN" },
                 { key: "overview", label: "BALANCE" },
                 { key: "settings", label: "SETTINGS" },
               ].map(function(tab) {
@@ -1520,7 +1520,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div ref={tabBarRef} style={{ display: "flex", gap: 20, marginBottom: 0, position: "relative", borderBottom: "0.5px solid " + S.border }}>
                 {[
-                  { key: "write", label: "DRAFT" },
+                  { key: "write", label: "PLAN" },
                   { key: "overview", label: "BALANCE" },
                   { key: "settings", label: "SETTINGS" },
                 ].map(function(tab) {
@@ -1874,12 +1874,13 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                       );
                     })}
                   </div>
+                  <div style={{ fontFamily: work, fontSize: 12, color: S.textSubtle, lineHeight: 1.4, marginTop: 16 }}>Select planned dates to draft a request email. Hold &#8984; and click to approve.</div>
                   </div>
                 )}
 
                 {writeSelectedGroups.length > 0 && writePlanGroups.length > 0 ? (
                   <div style={{ marginTop: 48 }}>
-                    <div style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, marginBottom: 16 }}>Text</div>
+                    <div style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, marginBottom: 16 }}>Request Email Draft</div>
                     <div style={{ background: S.surface, borderRadius: 16, padding: "16px 20px", userSelect: "text" }}>
                       {generateEmailText().split("\n").map(function(line, i) {
                         var isYearLine = /^\d{4}$/.test(line);
@@ -1921,7 +1922,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                     fontFamily: work, fontSize: 13, fontWeight: 600, color: S.bg, cursor: "pointer",
                     textTransform: "uppercase", letterSpacing: 0.5,
                   }}>
-                  Copy
+                  Copy email
                 </button>
               ) : (
                 <div style={{ display: "flex", gap: 10 }}>
