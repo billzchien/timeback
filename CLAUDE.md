@@ -170,12 +170,13 @@ Theme (Light / Dark / System) in Settings. Default is `system`.
 
 ## Roadmap
 
-1. Google sign-in + sign-out
-2. Onboarding flow (name, CL, service date, balance snapshot)
-3. Per-user data with RLS
-4. Account deletion
-5. Multi-year view
-6. Export to CSV/Google Calendar
+1. ~~Google sign-in + sign-out~~ ✓ Done
+2. ~~Onboarding flow (name, CL, service date, balance snapshot)~~ ✓ Done
+3. ~~Per-user data with RLS~~ ✓ Done
+4. ~~Account deletion + logout~~ ✓ Done
+5. Publish Google OAuth app (currently in testing mode)
+6. Multi-year view
+7. Export to CSV/Google Calendar
 
 ## Notes for Claude
 
