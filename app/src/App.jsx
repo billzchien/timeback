@@ -222,7 +222,7 @@ function OnboardingScreen({ user, onComplete }) {
           textTransform: 'uppercase', color: BLACK,
         }}>
           {saving
-            ? <div style={{ width: 18, height: 18, border: '2px solid ' + INK, borderTopColor: 'transparent', borderRadius: 999, animation: 'tbSpin 0.8s linear infinite' }} />
+            ? <div style={{ width: 18, height: 18, border: '1px solid ' + INK, borderTopColor: 'transparent', borderRadius: 999, animation: 'tbSpin 0.8s linear infinite' }} />
             : 'Start Planning'}
         </button>
       </div>
@@ -251,7 +251,7 @@ function TransitionCircle({ circleSize, circleVisible, showSpinner }) {
         ].join(', '),
       }}>
         {showSpinner && (
-          <div style={{ width: 16, height: 16, border: '2.5px solid ' + INK, borderTopColor: 'transparent', borderRadius: 999, animation: 'tbSpin 0.8s linear infinite' }} />
+          <div style={{ width: 16, height: 16, border: '1px solid ' + INK, borderTopColor: 'transparent', borderRadius: 999, animation: 'tbSpin 0.8s linear infinite' }} />
         )}
       </div>
     </div>
