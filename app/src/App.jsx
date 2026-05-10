@@ -75,7 +75,7 @@ function LoginScreen() {
       <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 48, color: BLACK, marginBottom: 12, lineHeight: 1 }}>Timeback</div>
       <div style={{ fontFamily: WORK, fontSize: 14, color: BLACK, textAlign: 'center', lineHeight: 1.7, marginBottom: 80 }}>
         A PTO planning tool by{' '}
-        <a href="https://billchien.com" target="_blank" rel="noopener noreferrer"
+        <a href="https://www.billchien.net" target="_blank" rel="noopener noreferrer"
           style={{ color: BLACK, textUnderlineOffset: 3 }}>Bill Chien</a>
         <br />
         <em style={{ fontStyle: 'italic' }}>for</em> Work &amp; Co friends.
