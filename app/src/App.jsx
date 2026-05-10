@@ -82,16 +82,17 @@ function LoginScreen() {
       </div>
       <button onClick={handleGoogle} style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '13px 24px', borderRadius: 999,
+        height: 48, padding: '0 24px', borderRadius: 999,
         border: '1px solid ' + GRAY15, background: '#fff',
-        fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK,
+        fontFamily: WORK, fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: BLACK,
         cursor: 'pointer', outline: 'none',
       }}>
-        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/>
-          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18" height="18" style={{display:'block'}}>
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
         </svg>
         Continue with Google
       </button>
@@ -102,8 +103,7 @@ function LoginScreen() {
 // ─── Onboarding screen ────────────────────────────────────────────────────────
 
 function OnboardingScreen({ user, onComplete }) {
-  var firstName = ((user.user_metadata && user.user_metadata.full_name) || user.email || '').split(' ')[0];
-  var [name,      setName]      = useState(firstName || '');
+  var [name,      setName]      = useState('');
   var [cl,        setCL]        = useState('');
   var [startStr,  setStartStr]  = useState('');
   var [mlDateStr, setMLDateStr] = useState('');
@@ -121,7 +121,7 @@ function OnboardingScreen({ user, onComplete }) {
     return function() { cancelAnimationFrame(raf); };
   }, []);
 
-  var isComplete = name.trim() && cl.trim() && startStr && bal !== '' && balDate;
+  var isComplete = name.trim() && cl.trim() && startStr && mlDateStr && bal !== '' && balDate;
 
   function tile(field) {
     return {
@@ -143,6 +143,7 @@ function OnboardingScreen({ user, onComplete }) {
     if (!name.trim())  errs.name    = true;
     if (!cl.trim())    errs.cl      = true;
     if (!startStr)     errs.start   = true;
+    if (!mlDateStr)    errs.ml      = true;
     if (bal === '')    errs.bal     = true;
     if (!balDate)      errs.balDate = true;
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
@@ -171,12 +172,12 @@ function OnboardingScreen({ user, onComplete }) {
           <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
             <div style={tile('name')}>
               <div style={lbl}>Name</div>
-              <input value={name} onChange={function(e) { setName(e.target.value); clearErr('name'); }}
+              <input value={name} placeholder="Firstname" className="tb-ob" onChange={function(e) { setName(e.target.value); clearErr('name'); }}
                 onFocus={function() { setFocused('name'); }} onBlur={function() { setFocused(null); }} style={inp} />
             </div>
             <div style={tile('cl')}>
               <div style={lbl}>Management Level</div>
-              <input value={cl} onChange={function(e) { setCL(e.target.value); clearErr('cl'); }}
+              <input value={cl} placeholder="13" className="tb-ob" onChange={function(e) { setCL(e.target.value); clearErr('cl'); }}
                 onFocus={function() { setFocused('cl'); }} onBlur={function() { setFocused(null); }} style={inp} />
             </div>
           </div>
@@ -187,7 +188,7 @@ function OnboardingScreen({ user, onComplete }) {
             </div>
             <div style={tile('ml')}>
               <div style={lbl}>Level Effective Date</div>
-              <OBDateField value={mlDateStr} onChange={setMLDateStr} />
+              <OBDateField value={mlDateStr} onChange={function(v) { setMLDateStr(v); clearErr('ml'); }} />
             </div>
           </div>
         </div>
@@ -198,7 +199,7 @@ function OnboardingScreen({ user, onComplete }) {
           <div style={{ display: 'flex', gap: 4 }}>
             <div style={tile('bal')}>
               <div style={lbl}>Hours</div>
-              <input type="number" value={bal} onChange={function(e) { setBal(e.target.value); clearErr('bal'); }}
+              <input type="number" value={bal} placeholder="0" className="tb-ob" onChange={function(e) { setBal(e.target.value); clearErr('bal'); }}
                 onFocus={function() { setFocused('bal'); }} onBlur={function() { setFocused(null); }} style={inp} />
             </div>
             <div style={tile('balDate')}>
@@ -210,7 +211,7 @@ function OnboardingScreen({ user, onComplete }) {
 
         {/* CTA */}
         <button onClick={saving ? undefined : handleSubmit} style={{
-          width: '100%', height: 60, borderRadius: 999, border: 'none',
+          width: '100%', height: 48, borderRadius: 999, border: 'none',
           background: isComplete ? LIME : GRAY05,
           transition: 'background 250ms ease',
           cursor: isComplete && !saving ? 'pointer' : 'default',

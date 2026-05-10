@@ -462,17 +462,13 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   }, [loaded]);
   var [active, setActive] = useState(null);
   var [showProj, setShowProj] = useState(false);
-  var [showOpps, setShowOpps] = useState(false);
-  var [previewDates, setPreviewDates] = useState([]);
-  var [previewCulDates, setPreviewCulDates] = useState([]);
-  var [previewExistingDates, setPreviewExistingDates] = useState([]);
   var [showSettings, setShowSettings] = useState(false);
   var [bal, setBal] = useState(0);
   var [balDate, setBalDate] = useState(new Date().toISOString().slice(0,10));
   var [toast, setToast] = useState(null);
   var [toastVisible, setToastVisible] = useState(false);
   var [showPanel, setShowPanel] = useState(false);
-  var [panelTab, setPanelTab] = useState("reco");
+  var [panelTab, setPanelTab] = useState("write");
   var [sheetDragY, setSheetDragY] = useState(0);
   var sheetDragStart = useRef(null);
   var defaultName = (user && user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name.split(' ')[0] : '';
@@ -493,7 +489,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   var prevDaysRef = useRef(null);
   var userChangedSettingsRef = useRef(false);
   var tooltipDivRef = useRef(null);
-  var [sliderDays, setSliderDays] = useState(null);
   var tabBarRef = useRef(null);
   var tabItemRefs = useRef({});
   var yearNavRef = useRef(null);
@@ -682,15 +677,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     }
   }, [panelTab, showPanel]);
 
-  // Scroll calendar to first preview date when opportunity is selected
-  useEffect(function() {
-    if (previewDates.length === 0) return;
-    var firstKey = previewDates.slice().sort()[0];
-    var el = document.querySelector('[data-date="' + firstKey + '"]');
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [previewDates]);
 
   var notify = useCallback(function(msg) {
     setToast(msg);
@@ -892,204 +878,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     };
   }, [days, bal, balDate, viewYear, startStr, editCL, mlDateStr]);
 
-  var opps = useMemo(function() {
-    var r = [];
-    var MS_PER_DAY = 86400000;
-
-    function addDays(date, n) {
-      var d = new Date(date.getTime());
-      d.setDate(d.getDate() + n);
-      return d;
-    }
-    function toKey(d) {
-      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-    }
-    function dateIsWknd(d) { var w = d.getDay(); return w === 0 || w === 6; }
-    function dateIsHol(d) { return toKey(d) in ALL_HOLIDAYS; }
-
-    Object.entries(ALL_HOLIDAYS).forEach(function(entry) {
-      var k = entry[0], name = entry[1];
-      var parts = k.split("-").map(Number);
-      var holDate = new Date(parts[0], parts[1] - 1, parts[2]);
-      if (dateIsWknd(holDate)) return; // skip Sat/Sun holidays
-
-      // Available PTO weekdays before holiday (closest first), stopping at another holiday
-      var before = [];
-      var cur = addDays(holDate, -1);
-      while (before.length < 15) {
-        if (dateIsHol(cur)) break;
-        if (!dateIsWknd(cur)) before.push(toKey(cur));
-        cur = addDays(cur, -1);
-      }
-
-      // Available PTO weekdays after holiday (closest first), stopping at another holiday
-      var after = [];
-      cur = addDays(holDate, 1);
-      while (after.length < 15) {
-        if (dateIsHol(cur)) break;
-        if (!dateIsWknd(cur)) after.push(toKey(cur));
-        cur = addDays(cur, 1);
-      }
-
-      // Try every (n before, m after) combo; keep minimum-cost config per break size
-      var sizeMap = {};
-      for (var n = 0; n <= before.length; n++) {
-        for (var m = 0; m <= after.length; m++) {
-          if (n + m === 0) continue;
-          var cost = n + m;
-          if (cost > 15) continue;
-
-          var ptoDates = before.slice(0, n).concat(after.slice(0, m));
-
-          // Find the calendar span of the break
-          var allTs = ptoDates.map(function(dk) {
-            var p = dk.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]).getTime();
-          });
-          allTs.push(holDate.getTime());
-
-          var minD = new Date(Math.min.apply(null, allTs));
-          var maxD = new Date(Math.max.apply(null, allTs));
-
-          // Extend span through adjacent weekends AND consecutive holidays
-          var safety = 0;
-          while (safety++ < 30) {
-            var prev = addDays(minD, -1);
-            if (dateIsWknd(prev) || dateIsHol(prev)) { minD = prev; } else { break; }
-          }
-          safety = 0;
-          while (safety++ < 30) {
-            var next = addDays(maxD, 1);
-            if (dateIsWknd(next) || dateIsHol(next)) { maxD = next; } else { break; }
-          }
-
-          var size = Math.round((maxD.getTime() - minD.getTime()) / MS_PER_DAY) + 1;
-          if (size < 4 || size > 20) continue;
-
-          if (!sizeMap[size] || cost < sizeMap[size].cost) {
-            sizeMap[size] = { cost: cost, ptoDates: ptoDates, startDate: toKey(minD), endDate: toKey(maxD) };
-          }
-        }
-      }
-
-      Object.entries(sizeMap).forEach(function(se) {
-        var size = parseInt(se[0]), info = se[1];
-        r.push({ date: k, name: name, size: size, ptoDates: info.ptoDates, startDate: info.startDate, endDate: info.endDate });
-      });
-    });
-
-    return r.sort(function(a, b) {
-      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-      return a.size - b.size;
-    });
-  }, []);
-
-  // Group opportunities by break size; hide any whose PTO dates are all already marked
-  // or that require more PTO than the user has available
-  var groupedOpps = useMemo(function() {
-    var MS = 86400000;
-    function dk2Date(dk) { var p = dk.split("-").map(Number); return new Date(p[0], p[1]-1, p[2]); }
-    function date2dk(d) { return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
-    function isOffDay(dk) { // weekend, holiday, or already-planned/used leave
-      var d = dk2Date(dk); var w = d.getDay();
-      if (w === 0 || w === 6) return true;
-      if (dk in ALL_HOLIDAYS) return true;
-      var t = days[dk];
-      return t === "PTO" || t === "CUL" || t === "PLAN" || t === "PLAN_CUL" || t === "UNPAID" || t === "PLAN_UNPAID";
-    }
-
-    var today0 = new Date(); today0.setHours(0,0,0,0);
-    var milD = new Date(startStr); milD.setFullYear(milD.getFullYear() + 5);
-    var mil10D = new Date(startStr); mil10D.setFullYear(mil10D.getFullYear() + 10);
-    var gClRates = getClRates(editCL);
-    var gPrevClRates = getClRates(parseInt(editCL) + 1);
-    var gMlDate = mlDateStr ? (function() { var d = new Date(mlDateStr); d.setHours(0,0,0,0); return d; })() : null;
-    function rateForPPG(pp) {
-      var rates = (gMlDate && pp < gMlDate) ? gPrevClRates : gClRates;
-      return pp >= mil10D ? rates.post10 : pp >= milD ? rates.post5 : rates.pre5;
-    }
-    var currentBal = stats.balHrs;
-
-    // Locked future PLAN dates the user has committed to — must stay feasible
-    var lockedPlanDates = Object.keys(lockedDates).filter(function(ld) {
-      return days[ld] === "PLAN" && new Date(ld) > today0;
-    }).sort();
-
-    // All existing future PLAN dates (for usedBy simulation)
-    var allFuturePlanDates = Object.entries(days)
-      .filter(function(e) { return e[1] === "PLAN" && new Date(e[0]) > today0; })
-      .map(function(e) { return e[0]; })
-      .sort();
-
-    var groups = {};
-    opps.filter(function(o) {
-      if (new Date(o.date) < today0) return false;
-      var holYear = parseInt(o.date.split("-")[0]);
-      var touchesViewYear = holYear === viewYear || o.ptoDates.some(function(d) { return parseInt(d.split("-")[0]) === viewYear; });
-      if (!touchesViewYear) return false;
-      var newDates = o.ptoDates.filter(function(d) {
-        return days[d] !== "PTO" && days[d] !== "CUL" && days[d] !== "PLAN" && days[d] !== "PLAN_CUL";
-      }).sort();
-      var unplanned = newDates.length;
-      if (unplanned > Math.max(0, stats.avail)) return false;
-      if (unplanned === 0) return false;
-
-      // Ensure adding these dates doesn't push any locked PLAN day into the red
-      if (lockedPlanDates.length > 0) {
-        for (var li = 0; li < lockedPlanDates.length; li++) {
-          var ld = lockedPlanDates[li];
-          var ldDate = new Date(ld);
-          var acc = 0;
-          PAY_PERIOD_ENDS.forEach(function(pp) {
-            if (pp > today0 && pp <= ldDate)
-              acc += rateForPPG(pp);
-          });
-          var additional = newDates.filter(function(d) { return d <= ld; }).length;
-          // Only blame this opp if it actually contributes dates before `ld`.
-          // Without this guard, an existing over-commit blocks every future opp.
-          if (additional === 0) continue;
-          var usedBy = allFuturePlanDates.filter(function(d) { return d <= ld; }).length;
-          if ((currentBal + acc - (usedBy + additional) * HOURS_PER_DAY) < 0) return false;
-        }
-      }
-
-      return true;
-    }).forEach(function(o) {
-      // Recalculate effective break size by extending the span through adjacent off-days
-      var minD = dk2Date(o.startDate);
-      var maxD = dk2Date(o.endDate);
-      var safety = 0;
-      while (safety++ < 60) {
-        var prev = new Date(minD.getTime() - MS);
-        if (isOffDay(date2dk(prev))) { minD = prev; } else { break; }
-      }
-      safety = 0;
-      while (safety++ < 60) {
-        var next = new Date(maxD.getTime() + MS);
-        if (isOffDay(date2dk(next))) { maxD = next; } else { break; }
-      }
-      var effectiveSize = Math.round((maxD.getTime() - minD.getTime()) / MS) + 1;
-
-      // Collect already-planned days within the effective span that are NOT in ptoDates.
-      // Days in ptoDates are already counted in the PTO total — including them here would double-count.
-      var alreadyPlanned = [];
-      var scanD = new Date(minD.getTime());
-      while (scanD.getTime() <= maxD.getTime()) {
-        var scanKey = date2dk(scanD);
-        if ((days[scanKey] === "PLAN" || days[scanKey] === "PLAN_CUL") && o.ptoDates.indexOf(scanKey) === -1)
-          alreadyPlanned.push(scanKey);
-        scanD = new Date(scanD.getTime() + MS);
-      }
-
-      var key = effectiveSize + " DAYS";
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(Object.assign({}, o, {
-        effectiveStart: date2dk(minD),
-        effectiveEnd: date2dk(maxD),
-        alreadyPlannedInSpan: alreadyPlanned,
-      }));
-    });
-    return groups;
-  }, [opps, days, viewYear, stats, lockedDates, startStr, editCL, mlDateStr]);
 
   // Group future PLAN/PLAN_CUL dates into consecutive blocks (weekends/holidays don't break a group)
   var writePlanGroups = useMemo(function() {
@@ -1205,7 +993,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     var otherHol = !hol && !type && isOtherHol(key) && showHolidays !== "acn";
     var wk = isWknd(year, month, day);
     var isAct = active === key;
-    var isPreview = previewDates.indexOf(key) !== -1;
+    var isPreview = false;
     var now = new Date();
     var isToday = now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
     var isPast = new Date(year, month, day) < new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1248,11 +1036,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       cellColor = S.text;
     }
 
-    // Preview override — bg at 50% opacity, text stays solid
-    if (isPreview && !type && !hol) {
-      cellBg = (previewCulDates.indexOf(key) !== -1 ? S.cul : S.pto) + "80";
-      cellColor = P.inkDeep;
-    }
 
     // Past dates: dim the number regardless of type
     if (isPast && !isToday) cellColor = S.textSubtle;
@@ -1362,9 +1145,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
         <div style={{
           position: "absolute", inset: 0, borderRadius: 999,
           background: (type === "PLAN_UNPAID" || type === "UNPAID") ? "transparent" : cellBg,
-          border: highlightedDates.indexOf(key) !== -1 ? "1px solid " + S.unpaid
-                : previewExistingDates.indexOf(key) !== -1 ? "1px solid " + S.unpaid
-                : "none",
+          border: highlightedDates.indexOf(key) !== -1 ? "1px solid " + S.unpaid : "none",
           boxShadow: isAct ? "0 0 0 0.5px " + S.border : "none",
           transition: "background 0.15s, box-shadow 0.15s",
           animation: justToggled[key] ? "dayCellPop 100ms cubic-bezier(0.4, 0, 0, 1) both" : "none",
@@ -1702,7 +1483,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div style={{ display: "flex", gap: 20, padding: "0 20px", position: "relative" }}>
               {[
-                { key: "reco", label: "PLAN" },
                 { key: "write", label: "DRAFT" },
                 { key: "overview", label: "BALANCE" },
                 { key: "settings", label: "SETTINGS" },
@@ -1743,7 +1523,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div ref={tabBarRef} style={{ display: "flex", gap: 20, marginBottom: 0, position: "relative", borderBottom: "0.5px solid " + S.border }}>
                 {[
-                  { key: "reco", label: "PLAN" },
                   { key: "write", label: "DRAFT" },
                   { key: "overview", label: "BALANCE" },
                   { key: "settings", label: "SETTINGS" },
@@ -1776,8 +1555,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
 
           {/* Scrollable content area */}
           <div style={{ flex: 1, overflowY: "auto", padding: isMobile
-            ? ("20px 20px " + (((panelTab === "reco" && previewDates.length > 0) || (panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0)) ? "120px" : "20px") + " 20px")
-            : ("0 24px " + (((panelTab === "reco" && previewDates.length > 0) || (panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0)) ? "160px" : "24px") + " 24px")
+            ? ("20px 20px " + (((panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0)) ? "120px" : "20px") + " 20px")
+            : ("0 24px " + (((panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0)) ? "160px" : "24px") + " 24px")
           }}>
 
             {/* Overview Tab */}
@@ -1860,91 +1639,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
             ) : null}
 
-            {/* Reco Tab */}
-            {panelTab === "reco" ? (function() {
-              var availSizes = Object.keys(groupedOpps).map(function(k) { return parseInt(k); }).sort(function(a,b){return a-b;});
-              var minDays = availSizes.length > 0 ? availSizes[0] : 4;
-              var maxDays = availSizes.length > 0 ? availSizes[availSizes.length-1] : 20;
-              var effectiveDays = sliderDays === null ? minDays : Math.max(minDays, Math.min(maxDays, sliderDays));
-              var thumbPct = maxDays > minDays ? (effectiveDays - minDays) / (maxDays - minDays) : 0;
-              var currentOpps = groupedOpps[effectiveDays + " DAYS"] || [];
-              var thumbStyle = { left: (thumbPct * 100) + "%", transform: "translateX(" + (-thumbPct * 100) + "%)" };
-              return (
-                <div style={{ paddingTop: isMobile ? 28 : 40 }}>
-                  {availSizes.length === 0 ? (
-                    <div style={{ fontFamily: work, fontSize: 12, color: S.textSubtle, lineHeight: 1.4 }}>No opportunities available with your current balance.</div>
-                  ) : (
-                    <div>
-                      {/* Single container card: Days Off + slider */}
-                      <div style={{ background: S.surface, borderRadius: 16, padding: "14px 14px 20px", marginBottom: 8 }}>
-                        <div style={{ fontFamily: work, fontSize: 12, color: S.textSubtle, marginBottom: 16 }}>Days off</div>
-                        {/* Numbers row */}
-                        <div style={{ position: "relative", height: 26, marginBottom: 14 }}>
-                          {effectiveDays > minDays && (
-                            <div style={{ position: "absolute", left: 0, fontFamily: grotesk, fontWeight: 500, fontSize: 20, color: S.textFaint, lineHeight: 1 }}>{minDays}</div>
-                          )}
-                          {effectiveDays < maxDays && (
-                            <div style={{ position: "absolute", right: 0, fontFamily: grotesk, fontWeight: 500, fontSize: 20, color: S.textFaint, lineHeight: 1 }}>{maxDays}</div>
-                          )}
-                          <div style={Object.assign({ position: "absolute", fontFamily: grotesk, fontWeight: 500, fontSize: 20, color: S.text, lineHeight: 1 }, thumbStyle)}>{effectiveDays}</div>
-                        </div>
-                        {/* Slider */}
-                        <input type="range" className="reco-slider"
-                          min={minDays} max={maxDays} step={1} value={effectiveDays}
-                          onChange={function(e) { setSliderDays(parseInt(e.target.value)); }}
-                        />
-                      </div>
-                      {/* Opportunity cards — no section header */}
-                      {currentOpps.length > 0 ? (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                          {currentOpps.map(function(o) {
-                            var isPreviewing = o.ptoDates.length > 0 && o.ptoDates.every(function(d) { return previewDates.indexOf(d) !== -1; });
-                            var sp = (o.effectiveStart || o.startDate || o.date).split("-");
-                            var ep = (o.effectiveEnd || o.endDate || o.date).split("-");
-                            var sm = MONTHS[parseInt(sp[1])-1].slice(0, 3);
-                            var sd = parseInt(sp[2]);
-                            var em = MONTHS[parseInt(ep[1])-1].slice(0, 3);
-                            var ed = parseInt(ep[2]);
-                            var dateRange = sm + " " + sd + " – " + (sp[1] !== ep[1] ? em + " " : "") + ed;
-                            return (
-                              <div key={o.date + "-" + o.size}
-                                onClick={function() {
-                                  if (isPreviewing) { setPreviewDates([]); setPreviewCulDates([]); setPreviewExistingDates([]); }
-                                  else {
-                                    var culCount = Math.min(Math.max(0, stats.culRemaining), o.ptoDates.length);
-                                    setPreviewCulDates(o.ptoDates.slice(0, culCount));
-                                    setPreviewDates(o.ptoDates);
-                                    var alreadyPlannedPtoDates = o.ptoDates.filter(function(d) { return days[d] === "PLAN" || days[d] === "PLAN_CUL"; });
-                                    setPreviewExistingDates((o.alreadyPlannedInSpan || []).concat(alreadyPlannedPtoDates));
-                                    var oppYear = parseInt(o.date.split("-")[0]); if (oppYear !== viewYear) setViewYear(oppYear);
-                                  }
-                                }}
-                                style={{ background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", cursor: "pointer", border: isPreviewing ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
-                                <div style={{ fontFamily: work, fontSize: 14, color: S.text, marginBottom: 8 }}>{dateRange}</div>
-                                {(function() {
-                                  var existing = o.alreadyPlannedInSpan || [];
-                                  var existingPTO = existing.filter(function(d) { return days[d] === "PLAN"; }).length;
-                                  var existingCUL = existing.filter(function(d) { return days[d] === "PLAN_CUL"; }).length;
-                                  var culCount = Math.min(Math.max(0, stats.culRemaining), o.ptoDates.length);
-                                  var ptoCount = (o.ptoDates.length - culCount) + existingPTO;
-                                  var totalCUL = culCount + existingCUL;
-                                  var parts = [];
-                                  if (ptoCount > 0) parts.push(ptoCount + " PTO" + (ptoCount > 1 ? "s" : ""));
-                                  if (totalCUL > 0) parts.push(totalCUL + " CUL" + (totalCUL > 1 ? "s" : ""));
-                                  return <div style={{ fontFamily: work, fontSize: 12, color: S.textSubtle }}>{parts.join(", ")}</div>;
-                                })()}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div style={{ fontFamily: work, fontSize: 12, color: S.textSubtle, lineHeight: 1.4 }}>No opportunities for {effectiveDays} days off.</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })() : null}
 
             {/* Settings Tab */}
             {panelTab === "settings" ? (
@@ -2065,7 +1759,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                 </div>
 
                 {/* ACCOUNT links */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <div
                     style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, cursor: "pointer", width: "fit-content" }}
                     onClick={async function() {
@@ -2212,8 +1906,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
 
           </div>{/* end scrollable content */}
 
-          {/* Sticky CTA footer — shown for Reco (when previewing), Settings (when dirty), and Write (when groups selected) */}
-          {(panelTab === "reco" && previewDates.length > 0) || (panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0 && writePlanGroups.length > 0) ? (
+          {/* Sticky CTA footer — shown for Settings (when dirty) and Write (when groups selected) */}
+          {(panelTab === "settings" && settingsDirty) || (panelTab === "write" && writeSelectedGroups.length > 0 && writePlanGroups.length > 0) ? (
             <div style={{
               position: "absolute", bottom: 0, left: 0, right: 0,
               background: "linear-gradient(to bottom, rgba(" + S.surfaceAltRgb + ",0) 0%, rgba(" + S.surfaceAltRgb + ",0.85) 45%, " + S.surfaceAlt + " 65%)",
@@ -2237,15 +1931,11 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                   {/* Cancel button */}
                   <button
                     onClick={function() {
-                      if (panelTab === "reco") {
-                        setPreviewDates([]); setPreviewCulDates([]); setPreviewExistingDates([]);
-                      } else {
-                        setEditName(userName);
-                        setEditBal(bal);
-                        setEditBalDate(balDate);
-                        setEditStart(startStr);
-                        setSettingsDirty(false);
-                      }
+                      setEditName(userName);
+                      setEditBal(bal);
+                      setEditBalDate(balDate);
+                      setEditStart(startStr);
+                      setSettingsDirty(false);
                     }}
                     style={{
                       flex: 1, height: 48, borderRadius: 999,
@@ -2258,25 +1948,14 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                   {/* Primary action button */}
                   <button
                     onClick={function() {
-                      if (panelTab === "reco") {
-                        pushHistory();
-                        var u = Object.assign({}, days);
-                        previewDates.forEach(function(k) {
-                          u[k] = previewCulDates.indexOf(k) !== -1 ? "PLAN_CUL" : "PLAN";
-                        });
-                        setDays(u);
-                        setPreviewDates([]); setPreviewCulDates([]); setPreviewExistingDates([]);
-                        notify("Plan applied");
-                      } else {
-                        userChangedSettingsRef.current = true;
-                        setUserName(editName);
-                        setBal(editBal);
-                        setBalDate(editBalDate);
-                        setStartStr(editStart);
-                        setMlDateStr(editMLDate);
-                        setSettingsDirty(false);
-                        persistSettings({ userName: editName, bal: editBal, balDate: editBalDate, startStr: editStart, mlDateStr: editMLDate });
-                      }
+                      userChangedSettingsRef.current = true;
+                      setUserName(editName);
+                      setBal(editBal);
+                      setBalDate(editBalDate);
+                      setStartStr(editStart);
+                      setMlDateStr(editMLDate);
+                      setSettingsDirty(false);
+                      persistSettings({ userName: editName, bal: editBal, balDate: editBalDate, startStr: editStart, mlDateStr: editMLDate });
                     }}
                     style={{
                       flex: 1, height: 48, borderRadius: 999,
@@ -2284,7 +1963,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                       fontFamily: work, fontSize: 13, fontWeight: 600, color: S.bg, cursor: "pointer",
                       textTransform: "uppercase", letterSpacing: 0.5,
                     }}>
-                    {panelTab === "reco" ? "Apply" : "Update"}
+                    Update
                   </button>
                 </div>
               )}
@@ -2319,11 +1998,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
           0%   { opacity: 1; transform: translateX(-50%) translateY(0); }\
           100% { opacity: 0; transform: translateX(-50%) translateY(12px); }\
         }\
-      " +
-        "input[type='range'].reco-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 1px; background: " + S.border + "; border-radius: 1px; outline: none; cursor: pointer; margin: 0; display: block; }" +
-        "input[type='range'].reco-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: " + S.surface + "; border: 1px solid " + S.border + "; box-shadow: " + S.shadowThumb + "; cursor: grab; }" +
-        "input[type='range'].reco-slider::-webkit-slider-thumb:active { cursor: grabbing; }" +
-        "input[type='range'].reco-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: " + S.surface + "; border: 1px solid " + S.border + "; box-shadow: " + S.shadowThumb + "; cursor: grab; border-box: border-box; }"
+      "
       }</style>
     </div>
   );
