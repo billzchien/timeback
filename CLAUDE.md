@@ -1,4 +1,4 @@
-# Timeout
+# Timeback
 
 A shared PTO tracking tool for Accenture employees — forked from Bill's personal PTO Tracker. Users sign in with Google via Supabase Auth; each user manages their own data independently.
 
@@ -15,7 +15,7 @@ cd app && npm run dev
 - Preview config: `.claude/launch.json`
 
 ```
-/Users/billchien/Documents/Apps/Timeout/
+/Users/billchien/Documents/Apps/Timeback/
 ├── app/
 │   ├── src/
 │   │   ├── PTOTracker.jsx    ← PRIMARY working file (all UI + logic)
