@@ -76,9 +76,11 @@ function LoginScreen() {
       <div style={{ fontFamily: WORK, fontSize: 14, color: BLACK, textAlign: 'center', lineHeight: 1.7, marginBottom: 80 }}>
         A PTO planning tool by{' '}
         <a href="https://www.billchien.net" target="_blank" rel="noopener noreferrer"
-          style={{ color: BLACK, textUnderlineOffset: 3 }}>Bill Chien</a>
+          style={{ color: BLACK, textDecoration: 'none' }}
+          onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}>Bill Chien</a>
         <br />
-        <em style={{ fontStyle: 'italic' }}>for</em> Work &amp; Co friends.
+        <em style={{ fontStyle: 'italic' }}>for</em> Work &amp; Co friends
       </div>
       <button onClick={handleGoogle} style={{
         display: 'flex', alignItems: 'center', gap: 10,
