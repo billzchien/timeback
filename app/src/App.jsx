@@ -111,6 +111,7 @@ function OnboardingScreen({ user, onComplete }) {
   var [mlDateStr, setMLDateStr] = useState('');
   var [bal,       setBal]       = useState('');
   var [balDate,   setBalDate]   = useState('');
+  var [culBal,    setCulBal]    = useState('2');
   var [focused,   setFocused]   = useState(null);
   var [errors,    setErrors]    = useState({});
   var [saving,    setSaving]    = useState(false);
@@ -153,7 +154,7 @@ function OnboardingScreen({ user, onComplete }) {
     setSaving(true);
     var data = {
       userName: name.trim(), editCL: cl.trim(), startStr: startStr, mlDateStr: mlDateStr,
-      bal: parseFloat(bal) || 0, balDate: balDate,
+      bal: parseFloat(bal) || 0, balDate: balDate, culBal: parseInt(culBal) || 0,
       weekStart: 'sunday', showHolidays: 'acn', theme: 'system',
       approvedGroups: {}, lockedDates: {},
     };
@@ -177,16 +178,16 @@ function OnboardingScreen({ user, onComplete }) {
               <input value={name} placeholder="Firstname" className="tb-ob" onChange={function(e) { setName(e.target.value); clearErr('name'); }}
                 onFocus={function() { setFocused('name'); }} onBlur={function() { setFocused(null); }} style={inp} />
             </div>
+            <div style={tile('start')}>
+              <div style={lbl}>Starting Date</div>
+              <OBDateField value={startStr} onChange={function(v) { setStartStr(v); clearErr('start'); }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
             <div style={tile('cl')}>
               <div style={lbl}>Management Level</div>
               <input value={cl} placeholder="13" className="tb-ob" onChange={function(e) { setCL(e.target.value); clearErr('cl'); }}
                 onFocus={function() { setFocused('cl'); }} onBlur={function() { setFocused(null); }} style={inp} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <div style={tile('start')}>
-              <div style={lbl}>Starting date</div>
-              <OBDateField value={startStr} onChange={function(v) { setStartStr(v); clearErr('start'); }} />
             </div>
             <div style={tile('ml')}>
               <div style={lbl}>Level Effective Date</div>
@@ -198,9 +199,9 @@ function OnboardingScreen({ user, onComplete }) {
         {/* Current Balance */}
         <div style={{ marginBottom: 48 }}>
           <div style={sec}>Current Balance</div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
             <div style={tile('bal')}>
-              <div style={lbl}>Hours</div>
+              <div style={lbl}>PTO Hours</div>
               <input type="number" value={bal} placeholder="0" className="tb-ob" onChange={function(e) { setBal(e.target.value); clearErr('bal'); }}
                 onFocus={function() { setFocused('bal'); }} onBlur={function() { setFocused(null); }} style={inp} />
             </div>
@@ -208,6 +209,11 @@ function OnboardingScreen({ user, onComplete }) {
               <div style={lbl}>As of</div>
               <OBDateField value={balDate} onChange={function(v) { setBalDate(v); clearErr('balDate'); }} />
             </div>
+          </div>
+          <div style={tile('culBal')}>
+            <div style={lbl}>Cultural Days Remaining</div>
+            <input type="number" value={culBal} min={0} max={2} placeholder="2" className="tb-ob" onChange={function(e) { setCulBal(e.target.value); }}
+              onFocus={function() { setFocused('culBal'); }} onBlur={function() { setFocused(null); }} style={inp} />
           </div>
         </div>
 

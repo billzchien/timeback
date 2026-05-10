@@ -74,12 +74,7 @@ function isWknd(y, m, d) { var w = dayOfWeek(y, m, d); return w === 0 || w === 6
 function isHol(key) { return key in ALL_HOLIDAYS; }
 function isOtherHol(key) { return key in OTHER_HOLIDAYS; }
 
-var DEFAULT_DATA = {
-  "2026-01-27": "PTO", "2026-01-28": "PTO", "2026-01-29": "PTO", "2026-01-30": "PTO",
-  "2026-02-02": "PTO", "2026-02-03": "PTO", "2026-02-04": "PTO", "2026-02-05": "PTO", "2026-02-06": "PTO",
-  "2026-02-09": "PTO", "2026-02-10": "PTO", "2026-02-11": "PTO", "2026-02-12": "PTO", "2026-02-13": "PTO",
-  "2026-02-16": "CUL", "2026-02-17": "CUL",
-};
+var DEFAULT_DATA = {};
 
 var mono = "'Space Mono', monospace";
 var grotesk = "'Space Grotesk', sans-serif";
@@ -477,6 +472,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   var [editCL, setEditCL] = useState('');
   var [editBal, setEditBal] = useState(0);
   var [editBalDate, setEditBalDate] = useState(new Date().toISOString().slice(0,10));
+  var [culBal, setCulBal] = useState(CUL_DAYS_TOTAL);
   var [startStr, setStartStr] = useState('');
   var [editStart, setEditStart] = useState('');
   var [mlDateStr, setMlDateStr] = useState("");
@@ -611,6 +607,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
           var p2 = sRes.data.data;
           if (p2.bal !== undefined) setBal(p2.bal);
           if (p2.balDate) setBalDate(p2.balDate);
+          if (p2.culBal !== undefined) setCulBal(p2.culBal);
           if (p2.userName) setUserName(p2.userName);
           if (p2.editCL) setEditCL(p2.editCL);
           if (p2.approvedGroups) setApprovedGroups(p2.approvedGroups);
@@ -869,7 +866,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     return {
       ptoUsed: ptoUsed, ptoPlanned: ptoPlanned,
       culUsed: culUsed, culPlanned: culPlanned,
-      culRemaining: CUL_DAYS_TOTAL - culUsed - culPlanned,
+      culRemaining: (new Date(balDate).getFullYear() === viewYear ? culBal : CUL_DAYS_TOTAL) - culUsed - culPlanned,
       culByYear: culByYear,
       balHrs: currentBal, futAcc: futAcc, eoy: eoy,
       eoyDays: eoy / HOURS_PER_DAY, avail: avail,
@@ -1645,7 +1642,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               <div style={{ paddingTop: isMobile ? 28 : 40 }}>
                 {/* INFO section — first: no top border */}
                 <div style={{ marginBottom: 48 }}>
-                  <div style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, marginBottom: 12 }}>Info</div>
+                  <div style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, marginBottom: 12 }}>Profile</div>
                   <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "name" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
                       <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Name</div>
@@ -1655,6 +1652,15 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                         onBlur={function() { setFocusedField(null); }}
                         style={{ border: "none", outline: "none", fontFamily: work, fontSize: 14, fontWeight: 500, width: "100%", background: "transparent", color: S.text }} />
                     </div>
+                    <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "milestone" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
+                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Starting Date</div>
+                      <DateField value={editStart} isFocused={focusedField === "milestone"}
+                        onChange={function(v) { setEditStart(v); setSettingsDirty(true); }}
+                        onFocus={function() { setFocusedField("milestone"); }}
+                        onBlur={function() { setFocusedField(null); }} />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "cl" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
                       <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Management Level</div>
                       <input type="text" value={editCL}
@@ -1663,17 +1669,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                         onBlur={function() { setFocusedField(null); }}
                         style={{ border: "none", outline: "none", fontFamily: work, fontSize: 14, fontWeight: 500, width: "100%", background: "transparent", color: S.text }} />
                     </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "milestone" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
-                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Starting Date</div>
-                      <DateField value={editStart} isFocused={focusedField === "milestone"}
-                        onChange={function(v) { setEditStart(v); setSettingsDirty(true); }}
-                        onFocus={function() { setFocusedField("milestone"); }}
-                        onBlur={function() { setFocusedField(null); }} />
-                    </div>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "mlDate" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
-                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>ML Effective Date</div>
+                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Level Effective Date</div>
                       <DateField value={editMLDate} isFocused={focusedField === "mlDate"}
                         onChange={function(v) { setEditMLDate(v); setSettingsDirty(true); }}
                         onFocus={function() { setFocusedField("mlDate"); }}
@@ -1685,9 +1682,9 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                 {/* CURRENT BALANCE section */}
                 <div style={{ marginBottom: 48 }}>
                   <div style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, marginBottom: 12 }}>Current Balance</div>
-                  <div style={{ display: "flex", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "bal" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
-                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>Hours</div>
+                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>PTO Hours</div>
                       <input type="number" value={editBal}
                         onChange={function(e) { setEditBal(parseFloat(e.target.value) || 0); setSettingsDirty(true); }}
                         onFocus={function() { setFocusedField("bal"); }}
@@ -1695,7 +1692,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                         style={{ border: "none", outline: "none", fontFamily: work, fontSize: 14, fontWeight: 500, width: "100%", background: "transparent", color: S.text }} />
                     </div>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "balDate" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
-                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>As of Date</div>
+                      <div style={{ fontFamily: work, fontSize: 11, color: S.textSubtle, marginBottom: 8 }}>As of</div>
                       <DateField value={editBalDate} isFocused={focusedField === "balDate"}
                         onChange={function(v) { setEditBalDate(v); setSettingsDirty(true); }}
                         onFocus={function() { setFocusedField("balDate"); }}
