@@ -257,7 +257,18 @@ function TransitionCircle({ circleSize, circleVisible, showSpinner }) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
+var PREVIEW_USER = {
+  id: 'preview-user',
+  email: 'bill@preview.local',
+  user_metadata: { full_name: 'Bill Chien' },
+};
+
 export default function App() {
+  var previewScreen = new URLSearchParams(window.location.search).get('preview');
+  if (previewScreen === 'login')      return <LoginScreen />;
+  if (previewScreen === 'onboarding') return <><style>{FONTS + SPIN_KF + PH_CSS}</style><OnboardingScreen user={PREVIEW_USER} onComplete={function() {}} /></>;
+  if (previewScreen === 'app')        return <PTOTracker user={PREVIEW_USER} />;
+
   // 'init' | 'login' | 'transition' | 'onboarding' | 'app'
   var [phase,       setPhase]       = useState('init');
   var [session,     setSession]     = useState(null);
