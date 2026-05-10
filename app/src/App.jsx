@@ -286,6 +286,7 @@ export default function App() {
   var [circleVis,   setCircleVis]   = useState(true);
   var [showSpinner, setShowSpinner] = useState(false);
   var timers = useRef([]);
+  var phaseRef = useRef('init');
 
   function clearTimers() {
     timers.current.forEach(clearTimeout);
@@ -297,9 +298,11 @@ export default function App() {
     timers.current.push(id);
   }
 
+  function setPhaseSync(p) { phaseRef.current = p; setPhase(p); }
+
   function startTransition(userId) {
     clearTimers();
-    setPhase('transition');
+    setPhaseSync('transition');
     setCircleSize(BIG_R);
     setCircleVis(true);
     setShowSpinner(false);
@@ -323,7 +326,7 @@ export default function App() {
         setIsNewUser(newUser);
         setCircleVis(false);        // Scale circle to 0 (350ms)
         after(400, function() {
-          setPhase(newUser ? 'onboarding' : 'app');
+          setPhaseSync(newUser ? 'onboarding' : 'app');
         });
       });
     });
@@ -336,20 +339,26 @@ export default function App() {
         setSession(sess);
         startTransition(sess.user.id);
       } else {
-        setPhase('login');
+        setPhaseSync('login');
       }
     });
 
     var sub = supabase.auth.onAuthStateChange(function(event, sess) {
       if (event === 'SIGNED_IN' && sess) {
-        setSession(sess);
-        startTransition(sess.user.id);
+        // Only run the transition if we're on the login screen — tab-switching
+        // also fires SIGNED_IN (token refresh) and would wipe onboarding data.
+        if (phaseRef.current === 'login' || phaseRef.current === 'init') {
+          setSession(sess);
+          startTransition(sess.user.id);
+        } else {
+          setSession(sess);
+        }
       }
       if (event === 'SIGNED_OUT') {
         clearTimers();
         setSession(null);
         setIsNewUser(false);
-        setPhase('login');
+        setPhaseSync('login');
       }
     });
 
@@ -364,7 +373,7 @@ export default function App() {
   }
   if (phase === 'login') return <LoginScreen />;
   if (phase === 'onboarding') {
-    return <OnboardingScreen user={session.user} onComplete={function() { setPhase('app'); }} />;
+    return <OnboardingScreen user={session.user} onComplete={function() { setPhaseSync('app'); }} />;
   }
   return <PTOTracker user={session.user} />;
 }
