@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "./supabase.js";
 
-const STORAGE_KEY = "bill-pto-2026-v2";
+// (no localStorage key — all data lives in Supabase, scoped per user)
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
@@ -388,196 +388,8 @@ function AnimatedNumber({ value, style }) {
   );
 }
 
-// Started as soon as the correct code is entered, so data is ready by the time the
-// animation finishes and PTOTrackerApp mounts.
-var dataPromise = null;
-
-async function prefetchData() {
-  var result = { days: null, settings: null };
-  try {
-    var res = await supabase.from('pto_days').select('*');
-    if (!res.error && res.data && res.data.length > 0) {
-      var loaded_days = {};
-      res.data.forEach(function(row) { loaded_days[row.date] = row.type; });
-      result.days = loaded_days;
-    } else {
-      var r = localStorage.getItem(STORAGE_KEY);
-      if (r) {
-        var p = JSON.parse(r);
-        if (p.days && Object.keys(p.days).length > 0) {
-          var rows = Object.keys(p.days).map(function(date) { return { date: date, type: p.days[date] }; });
-          await supabase.from('pto_days').upsert(rows);
-          result.days = p.days;
-        }
-      }
-    }
-    var sRes = await supabase.from('pto_settings').select('data').eq('id', 1).single();
-    if (!sRes.error && sRes.data) {
-      result.settings = sRes.data.data;
-    } else {
-      var r2 = localStorage.getItem(STORAGE_KEY);
-      if (r2) {
-        var p2 = JSON.parse(r2);
-        result.settings = p2;
-        await supabase.from('pto_settings').upsert({ id: 1, data: p2 });
-      }
-    }
-    var storedName = localStorage.getItem("bill-pto-userName");
-    if (storedName && result.settings && !result.settings.userName) result.storedName = storedName;
-  } catch(e) {}
-  return result;
-}
-
-function LockScreen({ onUnlock }) {
-  var [digits, setDigits] = useState([]);
-  var [phase, setPhase] = useState('idle'); // 'idle' | 'collapsing' | 'loading' | 'shrinking'
-  var inputRef = useRef(null);
-
-  useEffect(function() {
-    if (inputRef.current) inputRef.current.focus();
-  }, []);
-
-  var isComplete = digits.length === 4;
-  var hasAny = digits.length > 0;
-  var activeIndex = digits.length < 4 ? digits.length : -1;
-  var isAnimating = phase !== 'idle';
-
-  function focusInput() {
-    if (inputRef.current && !isAnimating) inputRef.current.focus();
-  }
-
-  function handleChange(e) {
-    if (isAnimating) return;
-    var raw = e.target.value.replace(/\D/g, '');
-    var val = raw.slice(0, 4);
-    setDigits(val.split('').filter(Boolean));
-    if (raw.length > 4) e.target.value = val;
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && isComplete && !isAnimating) handleSubmit();
-  }
-
-  function handleSubmit() {
-    if (!isComplete || isAnimating) return;
-    if (digits.join('') === '1960') {
-      dataPromise = prefetchData();
-      setPhase('collapsing');
-      setTimeout(function() {
-        setPhase('loading');
-        setTimeout(function() {
-          setPhase('shrinking');
-          setTimeout(onUnlock, 400);
-        }, 1500);
-      }, 600);
-    } else {
-      setDigits([]);
-      if (inputRef.current) { inputRef.current.value = ''; inputRef.current.focus(); }
-    }
-  }
-
-  // Row is 5×48 + 4×8 = 272px wide; center at x=136.
-  // Each input circle i has center at 24 + i*56; arrow center at 248.
-  // translateX needed to reach center: 136 - center.
-  var collapseX = [112, 56, 0, -56]; // for input circles 0-3
-  var arrowCollapseX = -112;          // for the arrow button
-
-  return (
-    <div onClick={focusInput} style={{
-      position: 'fixed', inset: 0, background: S.bg, zIndex: 9999,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    }}>
-      <style>{'@keyframes lockSpin { to { transform: rotate(360deg); } }'}</style>
-
-      {/* Hidden input captures keyboard; pointerEvents:none keeps it invisible */}
-      <input ref={inputRef} type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={4}
-        onChange={handleChange} onKeyDown={handleKeyDown}
-        style={{
-          position: 'absolute', opacity: 0, caretColor: 'transparent',
-          width: 1, height: 1, top: 0, left: 0, pointerEvents: 'none',
-        }} />
-
-      {/* ENTER CODE label */}
-      <div style={{
-        marginBottom: 40,
-        fontFamily: work, fontSize: 12, fontWeight: 600,
-        textTransform: 'uppercase', letterSpacing: 1, color: S.text,
-        opacity: isAnimating ? 0 : 1,
-        transition: phase === 'collapsing' ? 'opacity 250ms cubic-bezier(0.4,0,0,1)' : 'none',
-        userSelect: 'none',
-      }}>ENTER CODE</div>
-
-      {/* Five circles */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {[0, 1, 2, 3].map(function(i) {
-          return (
-            <div key={i} onClick={function(e) { e.stopPropagation(); focusInput(); }} style={{
-              width: 48, height: 48, borderRadius: 999,
-              background: S.surfaceAlt,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-              transform: isAnimating ? 'translateX(' + collapseX[i] + 'px)' : 'translateX(0)',
-              opacity: isAnimating ? 0 : 1,
-              transition: isAnimating
-                ? 'transform 500ms cubic-bezier(0.4,0,0,1), opacity 350ms cubic-bezier(0.4,0,0,1)'
-                : 'none',
-            }}>
-              {digits[i] && (
-                <span style={{ fontFamily: grotesk, fontWeight: 500, fontSize: 20, color: S.text, userSelect: 'none' }}>
-                  {digits[i]}
-                </span>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Arrow / confirm button */}
-        <div onClick={function(e) { e.stopPropagation(); handleSubmit(); }} style={{
-          width: 48, height: 48, borderRadius: 999,
-          background: (isAnimating || hasAny) ? S.pto : S.surfaceAlt,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: isComplete ? 'pointer' : 'default',
-          flexShrink: 0,
-          transform: phase === 'shrinking'
-            ? 'translateX(' + arrowCollapseX + 'px) scale(0)'
-            : (phase === 'collapsing' || phase === 'loading')
-              ? 'translateX(' + arrowCollapseX + 'px) scale(1)'
-              : 'translateX(0) scale(1)',
-          transition: phase === 'shrinking'
-            ? 'transform 350ms cubic-bezier(0.4,0,0,1)'
-            : 'background 150ms cubic-bezier(0.4,0,0,1), transform 500ms cubic-bezier(0.4,0,0,1)',
-        }}>
-          {(phase === 'loading' || phase === 'shrinking') ? (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-              style={{ animation: 'lockSpin 700ms linear infinite' }}>
-              <circle cx="8" cy="8" r="5.5" stroke="rgba(0,0,0,0.15)" strokeWidth="1"/>
-              <path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke={S.iconSubtle} strokeWidth="1" strokeLinecap="round"/>
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M5 2L10 7L5 12" stroke={S.iconSubtle} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function PTOTracker() {
-  var alreadyUnlocked = sessionStorage.getItem('pto-unlocked') === '1';
-  var [unlocked, setUnlocked] = useState(alreadyUnlocked);
-
-  var [theme, setTheme] = useState(function() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var p = JSON.parse(raw);
-        if (p && (p.theme === "light" || p.theme === "dark" || p.theme === "system")) return p.theme;
-      }
-    } catch(e) {}
-    return "system";
-  });
+export default function PTOTracker({ user }) {
+  var [theme, setTheme] = useState("system");
   var [systemDark, setSystemDark] = useState(function() {
     return typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
@@ -595,15 +407,7 @@ export default function PTOTracker() {
   var resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
   applyTheme(resolvedTheme);
 
-  if (!unlocked) {
-    return (
-      <LockScreen onUnlock={function() {
-        sessionStorage.setItem('pto-unlocked', '1');
-        setUnlocked(true);
-      }} />
-    );
-  }
-  return <PTOTrackerApp theme={theme} setTheme={setTheme} />;
+  return <PTOTrackerApp user={user} theme={theme} setTheme={setTheme} />;
 }
 
 function oooEase(x) {
@@ -639,7 +443,7 @@ function smoothScrollTo(container, targetEl, duration) {
   requestAnimationFrame(tick);
 }
 
-function PTOTrackerApp({ theme, setTheme }) {
+function PTOTrackerApp({ user, theme, setTheme }) {
   var [fadeIn, setFadeIn] = useState(false);
   var [days, setDays] = useState(DEFAULT_DATA);
   var [viewYear, setViewYear] = useState(2026);
@@ -663,21 +467,22 @@ function PTOTrackerApp({ theme, setTheme }) {
   var [previewCulDates, setPreviewCulDates] = useState([]);
   var [previewExistingDates, setPreviewExistingDates] = useState([]);
   var [showSettings, setShowSettings] = useState(false);
-  var [bal, setBal] = useState(-12);
-  var [balDate, setBalDate] = useState("2026-04-01");
+  var [bal, setBal] = useState(0);
+  var [balDate, setBalDate] = useState(new Date().toISOString().slice(0,10));
   var [toast, setToast] = useState(null);
   var [toastVisible, setToastVisible] = useState(false);
   var [showPanel, setShowPanel] = useState(false);
   var [panelTab, setPanelTab] = useState("reco");
   var [sheetDragY, setSheetDragY] = useState(0);
   var sheetDragStart = useRef(null);
-  var [userName, setUserName] = useState("Bill");
-  var [editName, setEditName] = useState("Bill");
-  var [editCL, setEditCL] = useState("8");
-  var [editBal, setEditBal] = useState(-12);
-  var [editBalDate, setEditBalDate] = useState("2026-04-01");
-  var [startStr, setStartStr] = useState("2021-08-02");
-  var [editStart, setEditStart] = useState("2021-08-02");
+  var defaultName = (user && user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name.split(' ')[0] : '';
+  var [userName, setUserName] = useState(defaultName);
+  var [editName, setEditName] = useState(defaultName);
+  var [editCL, setEditCL] = useState('');
+  var [editBal, setEditBal] = useState(0);
+  var [editBalDate, setEditBalDate] = useState(new Date().toISOString().slice(0,10));
+  var [startStr, setStartStr] = useState('');
+  var [editStart, setEditStart] = useState('');
   var [mlDateStr, setMlDateStr] = useState("");
   var [editMLDate, setEditMLDate] = useState("");
   var [settingsDirty, setSettingsDirty] = useState(false);
@@ -719,8 +524,7 @@ function PTOTrackerApp({ theme, setTheme }) {
       mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme
     };
     if (overrides) Object.assign(data, overrides);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
-    supabase.from('pto_settings').upsert({ id: 1, data: data }).then(function() {});
+    supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
   }
 
   useEffect(function() { daysRef.current = days; }, [days]);
@@ -800,15 +604,16 @@ function PTOTrackerApp({ theme, setTheme }) {
   useEffect(function() {
     async function loadData() {
       try {
-        // Use prefetched data if available (started during lock screen animation)
-        var result = dataPromise ? await dataPromise : await prefetchData();
-        dataPromise = null;
-        if (result.days) {
-          prevDaysRef.current = result.days;
-          setDays(result.days);
+        var res = await supabase.from('pto_days').select('*').eq('user_id', user.id);
+        if (!res.error && res.data && res.data.length > 0) {
+          var loaded_days = {};
+          res.data.forEach(function(row) { loaded_days[row.date] = row.type; });
+          prevDaysRef.current = loaded_days;
+          setDays(loaded_days);
         }
-        if (result.settings) {
-          var p2 = result.settings;
+        var sRes = await supabase.from('pto_settings').select('data').eq('user_id', user.id).single();
+        if (!sRes.error && sRes.data) {
+          var p2 = sRes.data.data;
           if (p2.bal !== undefined) setBal(p2.bal);
           if (p2.balDate) setBalDate(p2.balDate);
           if (p2.userName) setUserName(p2.userName);
@@ -821,7 +626,6 @@ function PTOTrackerApp({ theme, setTheme }) {
           if (p2.showHolidays) setShowHolidays(p2.showHolidays);
           if (p2.theme === "light" || p2.theme === "dark" || p2.theme === "system") setTheme(p2.theme);
         }
-        if (result.storedName) setUserName(result.storedName);
       } catch(e) {}
       setLoaded(true);
     }
@@ -839,8 +643,8 @@ function PTOTrackerApp({ theme, setTheme }) {
         if (prev[date] !== curr[date]) toUpsert.push({ date: date, type: curr[date] });
       });
       var toDelete = Object.keys(prev).filter(function(date) { return !(date in curr); });
-      if (toUpsert.length > 0) await supabase.from('pto_days').upsert(toUpsert);
-      if (toDelete.length > 0) await supabase.from('pto_days').delete().in('date', toDelete);
+      if (toUpsert.length > 0) await supabase.from('pto_days').upsert(toUpsert.map(function(r) { return Object.assign({ user_id: user.id }, r); }));
+      if (toDelete.length > 0) await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', toDelete);
       prevDaysRef.current = Object.assign({}, curr);
     }
     syncDays();
@@ -849,17 +653,9 @@ function PTOTrackerApp({ theme, setTheme }) {
   useEffect(function() {
     if (!loaded) return;
     var data = { bal: bal, balDate: balDate, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      localStorage.setItem("bill-pto-userName", userName);
-    } catch(e) {}
-    // Note: Supabase upserts now happen immediately in click handlers via
-    // persistSettings(). This effect only mirrors localStorage. We keep the
-    // ref-gated upsert as a safety net for any state changes routed through
-    // setX without a paired persistSettings() call.
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
-      supabase.from('pto_settings').upsert({ id: 1, data: data }).then(function() {});
+      supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
     }
   }, [bal, balDate, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme]);
 
@@ -2266,6 +2062,27 @@ function PTOTrackerApp({ theme, setTheme }) {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* ACCOUNT links */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div
+                    style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, cursor: "pointer", width: "fit-content" }}
+                    onClick={async function() {
+                      if (!window.confirm("Delete your account and all data? This cannot be undone.")) return;
+                      await supabase.from('pto_days').delete().eq('user_id', user.id);
+                      await supabase.from('pto_settings').delete().eq('user_id', user.id);
+                      await supabase.auth.signOut();
+                    }}
+                    onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+                  >Delete Account</div>
+                  <div
+                    style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, cursor: "pointer", width: "fit-content" }}
+                    onClick={function() { supabase.auth.signOut(); }}
+                    onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+                  >Log Out</div>
                 </div>
               </div>
             ) : null}
