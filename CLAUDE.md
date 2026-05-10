@@ -1,6 +1,6 @@
-# PTO Tracker
+# Timeout
 
-A personal PTO tracking and planning tool built for Bill (CL8 at Accenture). Started as a React artifact in Claude.ai, now running as a Vite + React app locally with a complete Figma-driven redesign.
+A shared PTO tracking tool for Accenture employees — forked from Bill's personal PTO Tracker. Users sign in with Google via Supabase Auth; each user manages their own data independently.
 
 ## Running the app
 
@@ -11,11 +11,11 @@ cd app && npm run dev
 ## Stack & project structure
 
 - **Vite + React** (no TypeScript), running on port 5173
-- **Supabase** for persistence (`pto_days` + `pto_settings` tables) — single hardcoded user, no auth
+- **Supabase** for auth (Google OAuth) and persistence (per-user `pto_days` + `pto_settings` tables)
 - Preview config: `.claude/launch.json`
 
 ```
-/Users/billchien/Documents/Apps/PTO Tracker/
+/Users/billchien/Documents/Apps/Timeout/
 ├── app/
 │   ├── src/
 │   │   ├── PTOTracker.jsx    ← PRIMARY working file (all UI + logic)
@@ -24,15 +24,34 @@ cd app && npm run dev
 │   │   └── index.css         ← Minimal reset
 │   ├── package.json
 │   └── vite.config.js
-├── pto-tracker.jsx           ← Original Claude artifact (read-only reference)
-├── pto-tracker-colors.json   ← Design tokens for Figma
 └── .claude/launch.json       ← Preview server config
 ```
 
+## Auth
+
+- Google OAuth via Supabase Auth
+- All Supabase table reads/writes are scoped to `auth.uid()` via Row Level Security (RLS)
+- App states: loading → signed out (login screen) → onboarding (first-time user) → main app
+- Logout and account deletion available from Settings
+
 ## Data model
 
-Leave days are stored in the `days` object (keyed by `YYYY-MM-DD` strings):
+All tables have a `user_id uuid` column (references `auth.users`) with RLS policies enforcing per-user access.
 
+### `pto_days`
+| Column | Type | Description |
+|--------|------|-------------|
+| `date` | text | `YYYY-MM-DD` |
+| `type` | text | See day types below |
+| `user_id` | uuid | FK to auth.users |
+
+### `pto_settings`
+| Column | Type | Description |
+|--------|------|-------------|
+| `user_id` | uuid | PK + FK to auth.users |
+| `data` | jsonb | All user settings (see Settings below) |
+
+### Day types
 | Type | Description |
 |------|-------------|
 | `PTO` | Used PTO day (past) |
@@ -48,6 +67,14 @@ Leave days are stored in the `days` object (keyed by `YYYY-MM-DD` strings):
 - **Cultural days**: Fixed 2 days/year (`CUL_DAYS_TOTAL = 2`), separate from PTO balance.
 - **Unpaid leave**: Unlimited. Does **not** consume PTO balance.
 
+## Onboarding flow
+
+First-time users (no `pto_settings` row) are shown an onboarding screen to configure:
+1. Name
+2. Management level (CL) — determines accrual rate milestones
+3. Service start date — used to compute 5yr/10yr accrual milestones
+4. Current PTO balance snapshot + snapshot date
+
 ## Interactions
 
 - **Click** an empty weekday: opens popup to assign PTO or CUL day.
@@ -59,32 +86,12 @@ Leave days are stored in the `days` object (keyed by `YYYY-MM-DD` strings):
 
 ## Panel tabs
 
-(Internal keys in parens — used in code. Tab labels in the UI are the bold names.)
-
 | Tab | Purpose |
 |-----|---------|
 | **PLAN** (`reco`) | Suggests break opportunities around holidays; preview + apply to calendar |
 | **DRAFT** (`write`) | Draft approval email from planned dates; copy to clipboard |
 | **BALANCE** (`overview`) | Current balance, accrual rates, used days |
-| **SETTINGS** (`settings`) | Name, management level, service start date, snapshot balance, calendar view (week start, US holidays scope, theme) |
-
-### Draft tab details
-- Future `PLAN`/`PLAN_CUL` dates are grouped into consecutive blocks (weekends and holidays between planned days don't break a group).
-- Each group is a selectable row — checked by default. Unchecking removes it from the email draft.
-- Clicking a row scrolls the calendar to those dates and highlights them with an `S.unpaid` (`#70D900`) border ring on top of the lime-green fill.
-- The **Text** section renders a ready-to-send email with each selected date range on its own bold line.
-- **Copy** button (sticky footer CTA) copies the plain-text email to the clipboard and toasts "Copied!".
-
-## Visual legend
-
-- Lime green fill (`S.pto`): planned PTO (`PLAN`)
-- Yellow fill (`S.cul`): planned cultural day (`PLAN_CUL`)
-- Coral fill (`S.ptoOver`): planned PTO that exceeds balance
-- Bright yellow fill (`S.holiday`): future holiday cell
-- Gray fill (`S.surfaceAlt`): weekend cells, past-holiday cells, past PTO/CUL cells (all unified)
-- Dashed lime stroke (`S.unpaid`): planned unpaid leave (`PLAN_UNPAID`)
-- Dashed gray stroke: used unpaid leave (`UNPAID`)
-- `S.unpaid` ring: highlight on calendar cells when a Draft-tab group is clicked
+| **SETTINGS** (`settings`) | Name, CL, service start date, snapshot balance, calendar view, logout, delete account |
 
 ## Business logic
 
@@ -93,23 +100,24 @@ Leave days are stored in the `days` object (keyed by `YYYY-MM-DD` strings):
 ACCRUAL_RATE_PRE5   = 7.0    // hrs/pay period before 5yr milestone
 ACCRUAL_RATE_POST5  = 7.67   // hrs/pay period from 5yr to 10yr milestone
 ACCRUAL_RATE_POST10 = 8.33   // hrs/pay period after 10yr milestone
-MILESTONE_DATE      = Aug 2, 2026  // Bill's 5-year mark (start + 5y); 10yr is start + 10y
 HOURS_PER_DAY       = 8
-CARRYOVER_CAP       = 200    // hard-coded as Math.min(...,200) — max hrs carrying to next FY
+CARRYOVER_CAP       = 200    // max hrs carrying to next FY
 CUL_DAYS_TOTAL      = 2      // cultural days per calendar year
 FY boundary: Sep 1 – Aug 31
 ```
+
+Milestones are computed dynamically from each user's service start date.
 
 ### Balance calculation
 
 `currentBal = snapshotBal + accruedSinceSnapshot − daysTakenSinceSnapshot × 8`
 
-Unpaid leave days are excluded from all balance calculations.
+Unpaid leave excluded from all balance calculations.
 
 ### Smart logic
 - Dynamic PLAN colors: lime if projected balance covers it, coral if not feasible.
 - Year-aware stats: switching years recalculates everything.
-- Service-year milestones: accrual rate bumps to 7.67 at 5 years (Aug 2, 2026 for Bill) and 8.33 at 10 years.
+- Service-year milestones: accrual rate bumps at 5yr and 10yr marks (computed per user).
 - FY rollover: caps balance at 200 hrs when crossing Aug 31.
 - Feasibility checking per planned date based on projected accruals.
 
@@ -120,7 +128,7 @@ Unpaid leave days are excluded from all balance calculations.
 - `Work Sans` — all UI text, labels, buttons
 - `Sorts Mill Goudy` — user name in panel header (italic serif)
 
-**Colors:** Two-tier system — primitives (`P`) hold raw values; semantic tokens (`S`) reference them. `S` has light + dark variants (`LIGHT_S` / `DARK_S`); `applyTheme(mode)` mutates the live `S` object on every render of the top-level `PTOTracker` component, so module-global reads of `S.x` stay in sync with the active theme.
+**Colors:** Two-tier system — primitives (`P`) hold raw values; semantic tokens (`S`) reference them. `S` has light + dark variants (`LIGHT_S` / `DARK_S`); `applyTheme(mode)` mutates the live `S` object on every render of the top-level component.
 
 ```js
 // Primitives
@@ -133,58 +141,45 @@ P.mint "#C8FFD6"
 P.yellow "#D9FF00"  P.yellowHi "#FCF937" P.coral "#FF715B"    P.maroon "#400000"
 
 // Semantic              LIGHT          DARK
-S.bg / S.surface       → P.white      / P.ink        // page bg, cards, popovers, inputs
-S.surfaceAlt           → P.gray05     / P.inkDeep    // panel bg, weekends, past days
-S.surfaceAltRgb        → "248,248,248"/"15,23,15"      // for the panel-fade gradient interpolation
-S.border               → P.gray15     / P.lime75     // dividers and strokes
-S.text                 → P.black      / P.lime       // primary text, today indicator
-S.textSubtle           → P.gray45     / P.lime55     // labels, captions, chevrons, past-day numerals
-S.textFaint            → P.gray25     / P.lime75     // PLAN slider min/max
-S.iconSubtle           → P.gray45     / P.lime35     // chevron strokes (year nav, lockscreen), lockscreen spinner stroke
-S.iconOnPto            → P.white      / P.inkDeep    // 4-dot panel toggle dots when panel is open (on lime bg)
+S.bg / S.surface       → P.white      / P.ink
+S.surfaceAlt           → P.gray05     / P.inkDeep
+S.surfaceAltRgb        → "248,248,248"/"15,23,15"
+S.border               → P.gray15     / P.lime75
+S.text                 → P.black      / P.lime
+S.textSubtle           → P.gray45     / P.lime55
+S.textFaint            → P.gray25     / P.lime75
+S.iconSubtle           → P.gray45     / P.lime35
+S.iconOnPto            → P.white      / P.inkDeep
 S.today / S.todayText  → P.black/P.white   / P.mint/P.inkDeep
-S.pto                  → P.lime       / P.lime       // planned PTO fill (same in both)
-S.ptoOver / Text       → P.coral/P.maroon  (same in both)
-S.cul                  → P.yellow     / P.lime05     // cultural day
-S.holiday              → P.yellowHi   / P.lime75     // holiday cell (future)
-S.unpaid               → P.limeDeep   / P.lime35     // unpaid stroke + DRAFT highlight ring
-S.shadowHeader         → "0 1px 12px rgba(0,0,0,0.08)" / "0 2px 16px rgba(0,0,0,0.4)"  // sticky header scroll shadow
-S.shadowThumb          → "0 1px 4px rgba(0,0,0,0.12)"  / "0 2px 6px rgba(0,0,0,0.4)"   // PLAN slider thumb shadow
+S.pto                  → P.lime       / P.lime
+S.ptoOver / Text       → P.coral/P.maroon
+S.cul                  → P.yellow     / P.lime05
+S.holiday              → P.yellowHi   / P.lime75
+S.unpaid               → P.limeDeep   / P.lime35
+S.shadowHeader         → "0 1px 12px rgba(0,0,0,0.08)" / "0 2px 16px rgba(0,0,0,0.4)"
+S.shadowThumb          → "0 1px 4px rgba(0,0,0,0.12)"  / "0 2px 6px rgba(0,0,0,0.4)"
 ```
 
-The Theme setting (Light / Dark / System) lives under Settings → Calendar View. Default is `system`; `system` follows `prefers-color-scheme` via a `matchMedia` subscription.
-
-Known still-hardcoded values (mostly shadows/depth on top of any surface, themed-agnostic): spinner track `rgba(0,0,0,0.15)`. The panel-fade gradient uses `S.surfaceAltRgb` and tracks the active theme.
-
-`S.shadowHeader` and `S.shadowThumb` are theme-aware shadow tokens (light: `rgba(0,0,0,0.08/0.12)`, dark: `rgba(0,0,0,0.4)`). Use these for any new shadows that need to be visible in dark mode.
+Theme (Light / Dark / System) in Settings. Default is `system`.
 
 **Layout:**
 - Sticky header: balance stats + year nav + panel toggle + divider
-- Calendar grid: `repeat(auto-fill, minmax(260px, 1fr))` — 4 cols desktop, responsive to 1 col mobile
+- Calendar grid: `repeat(auto-fill, minmax(260px, 1fr))` — 4 cols desktop, responsive to 1 col
 - Fluid circular cells: `width: 100%, aspectRatio: 1, borderRadius: 999`
 - Side panel: animated width `0 ↔ 360px`, pushes calendar (not overlay)
-- Figma file: `585nROM3w4oq3US9B6CLFa` (node `60-12856` for main view)
 
-## Wishlist
+## Roadmap
 
-**High priority**
-1. ~~Backend storage (Supabase) — sync across devices~~ ✓ Done
-2. ~~Dark mode~~ ✓ Done
-3. White-label / shared version — spun off as **Timeout** (separate project under `Documents/Apps/Timeout`)
-
-**Medium priority**
-4. China trip planner — lunar new year + mom's birthday optimization
+1. Google sign-in + sign-out
+2. Onboarding flow (name, CL, service date, balance snapshot)
+3. Per-user data with RLS
+4. Account deletion
 5. Multi-year view
 6. Export to CSV/Google Calendar
 
-**Nice to have**
-7. Configurable holidays (non-US)
-8. PTO history view
-9. Notifications
-10. Slack integration
-
 ## Notes for Claude
 
+- Update this CLAUDE.md whenever an important logic or architecture decision is made.
 - Bill prefers brief direct answers, lead with the conclusion.
 - He's a designer — expects pixel-perfect implementation from Figma.
 - The code uses `var` and `function()` style (artifact parser legacy).

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-export var supabase = createClient(
-  'https://wzzvahevprmwigtiriyr.supabase.co',
-  'sb_publishable_g6xudK0xCihfdQi5t-AbgA_XqqtexPN'
-);
+// TODO: replace with Timeout Supabase project credentials
+var SUPABASE_URL = 'YOUR_SUPABASE_URL';
+var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+export var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
