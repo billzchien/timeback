@@ -105,7 +105,10 @@ function LoginScreen() {
 // ─── Onboarding screen ────────────────────────────────────────────────────────
 
 function OnboardingScreen({ user, onComplete }) {
-  var [name,      setName]      = useState('');
+  var googleName = (user && user.user_metadata && user.user_metadata.full_name)
+    ? user.user_metadata.full_name.split(' ')[0]
+    : '';
+  var [name,      setName]      = useState(googleName);
   var [cl,        setCL]        = useState('');
   var [startStr,  setStartStr]  = useState('');
   var [mlDateStr, setMLDateStr] = useState('');
