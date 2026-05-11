@@ -69,11 +69,11 @@ function LoginScreen() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0, userSelect: 'none' }}>
       <style>{FONTS + SPIN_KF}</style>
       <div style={{ width: BIG_R, height: BIG_R, borderRadius: 999, background: LIME, flexShrink: 0, marginBottom: 32 }} />
-      <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 48, color: BLACK, marginBottom: 12, lineHeight: 1 }}>Timeback</div>
-      <div style={{ fontFamily: WORK, fontSize: 14, color: BLACK, textAlign: 'center', lineHeight: 1.7, marginBottom: 80 }}>
+      <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, color: BLACK, marginBottom: 12, lineHeight: 1, letterSpacing: -1 }}>Timeback</div>
+      <div style={{ fontFamily: WORK, fontSize: 14, color: BLACK, textAlign: 'center', lineHeight: 1.7, marginBottom: 120 }}>
         A PTO planning tool by{' '}
         <a href="https://www.billchien.net" target="_blank" rel="noopener noreferrer"
           style={{ color: BLACK, textDecoration: 'none' }}
@@ -111,7 +111,7 @@ function OnboardingScreen({ user, onComplete }) {
   var [mlDateStr, setMLDateStr] = useState('');
   var [bal,       setBal]       = useState('');
   var [balDate,   setBalDate]   = useState('');
-  var [culBal,    setCulBal]    = useState('2');
+  var [culBal,    setCulBal]    = useState('');
   var [focused,   setFocused]   = useState(null);
   var [errors,    setErrors]    = useState({});
   var [saving,    setSaving]    = useState(false);
@@ -124,7 +124,7 @@ function OnboardingScreen({ user, onComplete }) {
     return function() { cancelAnimationFrame(raf); };
   }, []);
 
-  var isComplete = name.trim() && cl.trim() && startStr && mlDateStr && bal !== '' && balDate;
+  var isComplete = name.trim() && cl.trim() && startStr && mlDateStr && bal !== '' && balDate && culBal !== '';
 
   function tile(field) {
     return {
@@ -149,6 +149,7 @@ function OnboardingScreen({ user, onComplete }) {
     if (!mlDateStr)    errs.ml      = true;
     if (bal === '')    errs.bal     = true;
     if (!balDate)      errs.balDate = true;
+    if (culBal === '') errs.culBal  = true;
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
     setSaving(true);
@@ -163,11 +164,11 @@ function OnboardingScreen({ user, onComplete }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: visible ? 1 : 0, transition: 'opacity 400ms ease' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: visible ? 1 : 0, transition: 'opacity 400ms ease', userSelect: 'none' }}>
       <style>{FONTS + SPIN_KF + PH_CSS}</style>
       <div style={{ width: '100%', maxWidth: 480, padding: '0 24px' }}>
 
-        <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 48, color: BLACK, marginBottom: 40, lineHeight: 1 }}>Welcome.</div>
+        <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, color: BLACK, marginBottom: 40, lineHeight: 1, letterSpacing: -1 }}>Welcome.</div>
 
         {/* Profile */}
         <div style={{ marginBottom: 24 }}>
@@ -212,7 +213,7 @@ function OnboardingScreen({ user, onComplete }) {
           </div>
           <div style={tile('culBal')}>
             <div style={lbl}>Cultural Days Remaining</div>
-            <input type="number" value={culBal} min={0} max={2} placeholder="2" className="tb-ob" onChange={function(e) { setCulBal(e.target.value); }}
+            <input type="number" value={culBal} min={0} max={2} placeholder="2" className="tb-ob" onChange={function(e) { setCulBal(e.target.value); clearErr('culBal'); }}
               onFocus={function() { setFocused('culBal'); }} onBlur={function() { setFocused(null); }} style={inp} />
           </div>
         </div>
