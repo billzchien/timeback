@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 var LIME   = '#ADFF55';
 var BLACK  = '#000000';
+var OOO    = 'cubic-bezier(0.4, 0.0, 0.0, 1.0)';
 var GRAY15 = '#E3E3E3';
 var GRAY45 = '#757575';
 var WORK   = "'Work Sans', sans-serif";
@@ -56,14 +57,18 @@ export default function About() {
     <div style={{ background: '#fff', minHeight: '100vh', userSelect: 'none' }}>
       <style>{FONTS + COL_CSS}</style>
 
-      {/* Hero: lime circle with 20vh top space, 80px below before tab bar */}
+      {/* Hero: lime circle matching login screen size and top position */}
       <div className="tb-about-hero" style={{
-        paddingTop: '20vh', paddingBottom: 80,
+        paddingTop: 'max(40px, calc(50vh - 265px))', paddingBottom: 80,
         display: 'flex', justifyContent: 'center', boxSizing: 'border-box',
       }}>
-        <div style={{ width: '100%', maxWidth: 480 }}>
-          <div style={{ width: '100%', aspectRatio: '1', borderRadius: 999, background: LIME }} />
-        </div>
+        <a href="/"
+          style={{ display: 'block', width: 220, height: 220, borderRadius: 999, background: LIME, flexShrink: 0, textDecoration: 'none', transition: 'transform 200ms ' + OOO }}
+          onMouseEnter={function(e) { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.transition = 'transform 200ms ' + OOO; }}
+          onMouseLeave={function(e) { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.transition = 'transform 200ms ' + OOO; }}
+          onMouseDown={function(e) { e.currentTarget.style.transform = 'scale(1.0)'; e.currentTarget.style.transition = 'transform 100ms ' + OOO; }}
+          onMouseUp={function(e) { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.transition = 'transform 200ms ' + OOO; }}
+        />
       </div>
 
       {/* Content column */}
