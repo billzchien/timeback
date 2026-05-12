@@ -1782,6 +1782,14 @@ function PTOTrackerApp({ user, theme, setTheme }) {
 
                 {/* ACCOUNT links */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <a
+                    href="https://timeback.fyi/about"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontFamily: work, fontSize: 11, textTransform: "uppercase", color: S.textSubtle, letterSpacing: 0.5, cursor: "pointer", width: "fit-content", textDecoration: "none" }}
+                    onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
+                    onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+                  >About</a>
                   <div
                     style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content" }}
                     onClick={async function() {

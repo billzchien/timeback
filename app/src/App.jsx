@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabase.js';
 import PTOTracker from './PTOTracker';
+import About from './About';
 
 var LIME    = '#ADFF55';
 var INK     = '#141B13';
@@ -276,11 +277,19 @@ var PREVIEW_USER = {
   user_metadata: { full_name: 'Bill Chien' },
 };
 
-export default function App() {
+export default function Router() {
   var previewScreen = new URLSearchParams(window.location.search).get('preview');
   if (previewScreen === 'login')      return <LoginScreen />;
   if (previewScreen === 'onboarding') return <><style>{FONTS + SPIN_KF + PH_CSS}</style><OnboardingScreen user={PREVIEW_USER} onComplete={function() {}} /></>;
   if (previewScreen === 'app')        return <PTOTracker user={PREVIEW_USER} />;
+
+  var path = window.location.pathname;
+  if (path === '/about' || path.startsWith('/about/')) return <About />;
+
+  return <AuthApp />;
+}
+
+function AuthApp() {
 
   // 'init' | 'login' | 'transition' | 'onboarding' | 'app'
   var [phase,       setPhase]       = useState('init');
