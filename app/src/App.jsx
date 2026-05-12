@@ -99,6 +99,15 @@ function LoginScreen() {
         </svg>
         Continue with Google
       </button>
+      <a href="/about/privacy" style={{
+        position: 'fixed', bottom: 20, left: 0, right: 0,
+        textAlign: 'center',
+        fontFamily: WORK, fontSize: 11, fontWeight: 400, textTransform: 'uppercase', letterSpacing: 1,
+        color: GRAY45, textDecoration: 'none',
+      }}
+        onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+        onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
+      >Privacy Policy</a>
     </div>
   );
 }
