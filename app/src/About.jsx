@@ -112,7 +112,7 @@ function StoryTab() {
   var p  = { fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: '0 0 20px 0' };
 
   return (
-    <div style={{ userSelect: 'text' }}>
+    <div>
       <p style={h1}>PTO is a serious business, for all of us.</p>
       <p style={p}>Lindsey told me that during my first year at Work &amp; Co, when I forgot to take time off. I know — we care about our work, sometimes too much.</p>
       <p style={p}>I didn't realize how quickly PTO could run out until I made a personal commitment to return home (China) every year for Chinese New Year, to spend time with family — the way many of us do for Christmas.</p>
@@ -137,7 +137,7 @@ function PrivacyTab() {
   var small = { fontFamily: WORK, fontSize: 12, color: GRAY45, margin: '0 0 32px 0' };
 
   return (
-    <div style={{ userSelect: 'text' }}>
+    <div>
       <p style={small}>Last updated: May 12, 2026</p>
       <p style={h1}>Timeback helps you plan your time off, and your data stays private, period.</p>
       <h2 style={h2}>What's Collected</h2>

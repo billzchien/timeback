@@ -22,7 +22,7 @@ var SMALL_R = 40;
 
 // ─── Onboarding date field ────────────────────────────────────────────────────
 
-function OBDateField({ value, onChange }) {
+function OBDateField({ value, onChange, onFocus, onBlur }) {
   var parts = (value || '').split('-');
   var [yyyy, setYyyy] = useState(parts[0] || '');
   var [mm,   setMm]   = useState(parts[1] || '');
@@ -47,16 +47,19 @@ function OBDateField({ value, onChange }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <input ref={mmRef} type="text" value={mm} maxLength={2} placeholder="MM" className="tb-ob"
         onChange={function(e) { var v = e.target.value.replace(/\D/g,'').slice(0,2); setMm(v); tryEmit(yyyy,v,dd); if (v.length===2) ddRef.current && ddRef.current.focus(); }}
+        onFocus={onFocus} onBlur={onBlur}
         style={Object.assign({}, seg, { width: 22 })} />
       <span style={sep}>/</span>
       <input ref={ddRef} type="text" value={dd} maxLength={2} placeholder="DD" className="tb-ob"
         onChange={function(e) { var v = e.target.value.replace(/\D/g,'').slice(0,2); setDd(v); tryEmit(yyyy,mm,v); if (v.length===2) yyyyRef.current && yyyyRef.current.focus(); }}
         onKeyDown={function(e) { if (e.key==='Backspace' && dd==='') mmRef.current && mmRef.current.focus(); }}
+        onFocus={onFocus} onBlur={onBlur}
         style={Object.assign({}, seg, { width: 22 })} />
       <span style={sep}>/</span>
       <input ref={yyyyRef} type="text" value={yyyy} maxLength={4} placeholder="YYYY" className="tb-ob"
         onChange={function(e) { var v = e.target.value.replace(/\D/g,'').slice(0,4); setYyyy(v); tryEmit(v,mm,dd); }}
         onKeyDown={function(e) { if (e.key==='Backspace' && yyyy==='') ddRef.current && ddRef.current.focus(); }}
+        onFocus={onFocus} onBlur={onBlur}
         style={Object.assign({}, seg, { width: 36 })} />
     </div>
   );
@@ -194,7 +197,7 @@ function OnboardingScreen({ user, onComplete }) {
             </div>
             <div style={tile('start')}>
               <div style={lbl}>Starting Date</div>
-              <OBDateField value={startStr} onChange={function(v) { setStartStr(v); clearErr('start'); }} />
+              <OBDateField value={startStr} onChange={function(v) { setStartStr(v); clearErr('start'); }} onFocus={function() { setFocused('start'); }} onBlur={function() { setFocused(null); }} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -205,7 +208,7 @@ function OnboardingScreen({ user, onComplete }) {
             </div>
             <div style={tile('ml')}>
               <div style={lbl}>Level Effective Date</div>
-              <OBDateField value={mlDateStr} onChange={function(v) { setMLDateStr(v); clearErr('ml'); }} />
+              <OBDateField value={mlDateStr} onChange={function(v) { setMLDateStr(v); clearErr('ml'); }} onFocus={function() { setFocused('ml'); }} onBlur={function() { setFocused(null); }} />
             </div>
           </div>
         </div>
@@ -221,7 +224,7 @@ function OnboardingScreen({ user, onComplete }) {
             </div>
             <div style={tile('balDate')}>
               <div style={lbl}>As of</div>
-              <OBDateField value={balDate} onChange={function(v) { setBalDate(v); clearErr('balDate'); }} />
+              <OBDateField value={balDate} onChange={function(v) { setBalDate(v); clearErr('balDate'); }} onFocus={function() { setFocused('balDate'); }} onBlur={function() { setFocused(null); }} />
             </div>
           </div>
           <div style={tile('culBal')}>
