@@ -1104,8 +1104,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
         key={key}
         onClick={function(e) {
           e.stopPropagation();
-          if (hol || wk) return;
-          if (isPast && !e.altKey) return;
+          if (hol || wk) { setActive(null); return; }
+          if (isPast && !e.altKey) { setActive(null); return; }
           // L+click: toggle locked state on future planned dates
           if (e.altKey && (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID")) {
             var now0 = new Date(); now0.setHours(0,0,0,0);
