@@ -128,7 +128,10 @@ function StoryTab() {
       <p style={p}>My first version was a Google Sheet, which I&#x2019;m glad to find people actually using. Now, the timing couldn&#x2019;t be better to take it further — following a trend I&#x2019;ve been curious about: vibe coding. No business case, no timeline, no bothering anyone else. Just a designer, a vision, and a workstation.</p>
       <p style={p}>Timeback was born on a weekend when I decided to try Claude Code. Many days of back and forth to get things looking and feeling right. I was so excited watching my imagination come to life.</p>
       <p style={p}>Now, I want to share that with you. Enjoy!</p>
-      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, lineHeight: 1.75, margin: '0 0 4px 0' }}>Bill Chien</p>
+      <a href="https://www.billchien.net/" target="_blank" rel="noopener noreferrer"
+        onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+        onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
+        style={{ display: 'block', fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, lineHeight: 1.75, margin: '0 0 4px 0', textDecoration: 'none' }}>Bill Chien</a>
       <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.75, margin: '0 0 40px 0' }}>May 12, 2026</p>
     </div>
   );
