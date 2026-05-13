@@ -150,7 +150,7 @@ function GuideTab() {
         <li>Click any empty weekday to plan a day — PTO or Cultural Day</li>
         <li>Click a planned day to clear it</li>
       </ul>
-      <h2 style={h2}>Navigating years</h2>
+      <h2 style={h2}>Navigate calendar years</h2>
       <ul style={ul}>
         <li>Use the year navigation to move between calendar years</li>
         <li>The balance on top reflects the days available in the current selected calendar year</li>
