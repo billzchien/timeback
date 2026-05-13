@@ -370,6 +370,7 @@ function AuthApp() {
 
     var sub = supabase.auth.onAuthStateChange(function(event, sess) {
       if (event === 'SIGNED_IN' && sess) {
+        if (window.location.hash) window.history.replaceState(null, '', window.location.pathname);
         // Only run the transition if we're on the login screen — tab-switching
         // also fires SIGNED_IN (token refresh) and would wipe onboarding data.
         if (phaseRef.current === 'login' || phaseRef.current === 'init') {
