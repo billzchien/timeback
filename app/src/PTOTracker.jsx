@@ -1794,8 +1794,15 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                     style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content" }}
                     onClick={async function() {
                       if (!window.confirm("Delete your account and all data? This cannot be undone.")) return;
-                      await supabase.from('pto_days').delete().eq('user_id', user.id);
-                      await supabase.from('pto_settings').delete().eq('user_id', user.id);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('delete-account');
+                        console.log('delete-account response:', { data, error });
+                        if (error) { alert('Failed to delete account: ' + error.message); return; }
+                      } catch (e) {
+                        console.error('delete-account exception:', e);
+                        alert('Failed to delete account: ' + e.message);
+                        return;
+                      }
                       await supabase.auth.signOut();
                     }}
                     onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
