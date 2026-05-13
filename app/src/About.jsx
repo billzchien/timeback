@@ -186,7 +186,6 @@ function PrivacyTab() {
 
   return (
     <div>
-      <p style={small}>Last updated: May 12, 2026</p>
       <p style={h1}>Timeback helps you plan your time off, and your data stays private, period.</p>
       <h2 style={h2}>What&#x2019;s collected</h2>
       <p style={p}>Your name and email (via Google Sign-In), plus any PTO data you enter — dates, balances, and settings.</p>
@@ -198,7 +197,8 @@ function PrivacyTab() {
       <p style={p}>Google is used only for authentication. Timeback does not access Gmail, Google Calendar, or any other Google services.</p>
       <h2 style={h2}>Deleting your data</h2>
       <p style={p}>You&#x2019;re in full control. Permanently delete your account and all associated data anytime from the Settings tab.</p>
-      <p style={{ fontFamily: WORK, fontStyle: 'italic', fontSize: 14, color: BLACK, margin: '0 0 40px 0' }}>The end.</p>
+      <p style={{ fontFamily: WORK, fontStyle: 'italic', fontSize: 14, color: BLACK, margin: '0 0 16px 0' }}>The end.</p>
+      <p style={small}>Last updated: May 12, 2026</p>
     </div>
   );
 }
