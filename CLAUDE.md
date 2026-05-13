@@ -135,6 +135,21 @@ Unpaid leave excluded from all balance calculations.
 - `Work Sans` — all UI text, labels, buttons
 - `Sorts Mill Goudy` — user name in panel header (italic serif)
 
+**Type scale (`T`):**
+```js
+T.stat                          // Space Mono, weight 400, lineHeight 1 — big header numbers (fontSize set per usage: 44 mobile, 54 desktop)
+T.display.lg                    // Sorts Mill Goudy italic, 50px — user name
+T.display.md                    // Sorts Mill Goudy italic, 22px
+T.num                           // Work Sans, 20px, weight 500 — panel stat numbers
+T.label.alt                     // Work Sans, 11px, weight 500, uppercase + letterSpacing — primary labels (e.g. "PTO DAYS")
+T.label.base                    // Work Sans, 11px, weight 400, uppercase + letterSpacing — secondary labels (e.g. "BY DEC 31")
+T.label.sm                      // Work Sans, 11px, weight 400 — small labels, no transform
+T.body.sm                       // Work Sans, 12px, weight 400 — small body text
+T.body.smAlt                    // Work Sans, 12px, weight 500 — small body emphasis
+T.body.base                     // Work Sans, 14px, weight 400 — default body
+T.body.alt                      // Work Sans, 14px, weight 500 — body emphasis, inputs, buttons
+```
+
 **Colors:** Two-tier system — primitives (`P`) hold raw values; semantic tokens (`S`) reference them. `S` has light + dark variants (`LIGHT_S` / `DARK_S`); `applyTheme(mode)` mutates the live `S` object on every render of the top-level component.
 
 ```js
