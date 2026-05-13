@@ -192,7 +192,7 @@ function PrivacyTab() {
       <h2 style={h2}>How your data is used</h2>
       <p style={p}>Only to run the app. Your data powers your calendar and balance calculations. It is never sold, shared, or used for advertising — ever.</p>
       <h2 style={h2}>Where your data is stored</h2>
-      <p style={p}>Securely in Supabase, isolated to your account. Other users cannot see your data, and the developer will never view or use it.</p>
+      <p style={p}>Securely in <a href="https://supabase.com/" target="_blank" rel="noopener noreferrer" style={{ color: BLACK }}>Supabase</a>, isolated to your account. Other users cannot see your data, and the developer will never view or use it.</p>
       <h2 style={h2}>Google sign-in</h2>
       <p style={p}>Google is used only for authentication. Timeback does not access Gmail, Google Calendar, or any other Google services.</p>
       <h2 style={h2}>Deleting your data</h2>
