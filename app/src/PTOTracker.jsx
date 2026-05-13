@@ -1120,6 +1120,15 @@ function PTOTrackerApp({ user, theme, setTheme }) {
           // Cmd+click: toggle between PLAN and PLAN_UNPAID
           if (e.metaKey) {
             if (type === "PLAN") {
+              var clickedDate = new Date(year, month, day);
+              var fyStartYear = clickedDate.getMonth() >= 8 ? clickedDate.getFullYear() : clickedDate.getFullYear() - 1;
+              var fyS = new Date(fyStartYear, 8, 1);
+              var fyE = new Date(fyStartYear + 1, 7, 31);
+              var unpaidInFY = Object.keys(days).filter(function(k) {
+                var t = days[k]; var d = new Date(k + "T12:00:00");
+                return (t === "PLAN_UNPAID" || t === "UNPAID") && d >= fyS && d <= fyE;
+              }).length;
+              if (unpaidInFY >= 5) return;
               pushHistory();
               setDays(function(prev) { var u = Object.assign({}, prev); u[key] = "PLAN_UNPAID"; return u; });
               setActive(null);
@@ -1201,7 +1210,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
             animation: "popupBounce 0.2s cubic-bezier(0.4, 0, 0, 1) both",
           }}>
             {[
-              { opt: "pto", label: "PTO DAY", circleBg: ptoFeasible ? S.pto : S.ptoOver, circleBorder: "none", labelColor: ptoFeasible ? null : S.ptoOverText },
+              { opt: "pto", label: "PTO DAY", circleBg: ptoFeasible ? S.pto : S.ptoOver, circleBorder: "none", labelColor: ptoFeasible ? null : S.ptoOver },
               { opt: "cul", label: "CUL DAY", circleBg: S.cul, circleBorder: "none", labelColor: null },
             ].map(function(item) {
               var isSelected = currentOption === item.opt;

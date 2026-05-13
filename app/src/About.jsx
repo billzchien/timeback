@@ -17,7 +17,10 @@ var COL_CSS = [
 ].join("\n");
 
 function getTab() {
-  return window.location.pathname === '/about/privacy' ? 'privacy' : 'story';
+  var p = window.location.pathname;
+  if (p === '/about/privacy') return 'privacy';
+  if (p === '/about/guide') return 'guide';
+  return 'story';
 }
 
 export default function About() {
@@ -43,7 +46,8 @@ export default function About() {
 
   function go(t) {
     setTab(t);
-    window.history.pushState({}, '', t === 'privacy' ? '/about/privacy' : '/about');
+    var url = t === 'privacy' ? '/about/privacy' : t === 'guide' ? '/about/guide' : '/about';
+    window.history.pushState({}, '', url);
   }
 
   var tabLbl = {
@@ -76,7 +80,7 @@ export default function About() {
 
         {/* Tab bar — matches panel tab style */}
         <div ref={tabBarRef} style={{ display: 'flex', gap: 20, position: 'relative', borderBottom: '0.5px solid ' + GRAY15, marginBottom: 40 }}>
-          {[['story', 'Story'], ['privacy', 'Privacy Policy']].map(function(pair) {
+          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy']].map(function(pair) {
             var key = pair[0], label = pair[1];
             var active = tab === key;
             return (
@@ -99,7 +103,7 @@ export default function About() {
           }} />
         </div>
 
-        {tab === 'story' ? <StoryTab /> : <PrivacyTab />}
+        {tab === 'story' ? <StoryTab /> : tab === 'guide' ? <GuideTab /> : <PrivacyTab />}
       </div>
 
       <div style={{ height: 80 }} />
@@ -115,17 +119,61 @@ function StoryTab() {
     <div>
       <p style={h1}>PTO is a serious business, for all of us.</p>
       <p style={p}>Lindsey told me that during my first year at Work &amp; Co, when I forgot to take time off. I know — we care about our work, sometimes too much.</p>
-      <p style={p}>I didn't realize how quickly PTO could run out until I made a personal commitment to return home (China) every year for Chinese New Year, to spend time with family — the way many of us do for Christmas.</p>
+      <p style={p}>I didn&#x2019;t realize how quickly PTO could run out until I made a personal commitment to return home (China) every year for Chinese New Year, to spend time with family — the way many of us do for Christmas.</p>
       <p style={p}>In the old days, planning PTO was simple. A set number of days, spend them whenever you want.</p>
       <p style={p}>Then everything changed.</p>
-      <p style={p}>We now have two different cycles — fiscal year and calendar year — for two different types of time off. We can't use PTO before it accrues (yes, I got warned for going into negative balance). Checking your balance is inconvenient. All of this makes vacation planning unnecessarily hard.</p>
-      <p style={p}>I often say to my colleagues: we design great products for our clients, but we rarely think about ourselves. I had to do something about it — just like when I created Bill's Tool Box.</p>
+      <p style={p}>We now have two different cycles — fiscal year and calendar year — for two different types of time off. We can&#x2019;t use PTO before it accrues (yes, I got warned for going into negative balance). Checking your balance is inconvenient. All of this makes vacation planning unnecessarily hard.</p>
+      <p style={p}>I often say to my colleagues: we design great products for our clients, but we rarely think about ourselves. I had to do something about it — just like when I created Bill&#x2019;s Tool Box.</p>
       <p style={p}>I needed an app that could forecast my balance, help me plan time off months in advance, and still follow company policy.</p>
-      <p style={p}>My first version was a Google Sheet, which I'm glad to find people actually using. Now, the timing couldn't be better to take it further — following a trend I've been curious about: vibe coding. No business case, no timeline, no bothering anyone else. Just a designer, a vision, and a workstation.</p>
+      <p style={p}>My first version was a Google Sheet, which I&#x2019;m glad to find people actually using. Now, the timing couldn&#x2019;t be better to take it further — following a trend I&#x2019;ve been curious about: vibe coding. No business case, no timeline, no bothering anyone else. Just a designer, a vision, and a workstation.</p>
       <p style={p}>Timeback was born on a weekend when I decided to try Claude Code. Many days of back and forth to get things looking and feeling right. I was so excited watching my imagination come to life.</p>
       <p style={p}>Now, I want to share that with you. Enjoy!</p>
       <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, lineHeight: 1.75, margin: '0 0 4px 0' }}>Bill Chien</p>
       <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.75, margin: '0 0 40px 0' }}>May 12, 2026</p>
+    </div>
+  );
+}
+
+function GuideTab() {
+  var h1 = { fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, lineHeight: 1.1, letterSpacing: -1, color: BLACK, margin: '0 0 48px 0' };
+  var h2 = { fontFamily: GOUDY, fontStyle: 'italic', fontSize: 22, fontWeight: 400, lineHeight: 1.2, color: BLACK, margin: '0 0 8px 0' };
+  var ul = { fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: '0 0 32px 0', paddingLeft: 20 };
+
+  return (
+    <div>
+      <p style={h1}>Here&#x2019;s the manual.</p>
+      <h2 style={h2}>Plan a day off</h2>
+      <ul style={ul}>
+        <li>Click any empty weekday to plan a day — PTO or Cultural Day</li>
+        <li>Click a planned day to clear it</li>
+      </ul>
+      <h2 style={h2}>Navigating years</h2>
+      <ul style={ul}>
+        <li>Use the year navigation to move between calendar years</li>
+        <li>The balance on top reflects the days available in the current selected calendar year</li>
+      </ul>
+      <h2 style={h2}>Planned PTO day color</h2>
+      <ul style={ul}>
+        <li>Green — your projected balance covers this day</li>
+        <li>Red — you won&#x2019;t have enough balance when this day arrives</li>
+      </ul>
+      <h2 style={h2}>Convert planned PTO to unpaid leave</h2>
+      <ul style={ul}>
+        <li>&#x2318; Command + Click a planned PTO day to change it to unpaid leave</li>
+        <li>&#x2318; Command + Click again to change it back</li>
+      </ul>
+      <h2 style={h2}>Lock a planned day</h2>
+      <ul style={ul}>
+        <li>A planned day can be locked so it can&#x2019;t be cleared with a single click</li>
+        <li>&#x2325; Option + Click a planned day to lock it</li>
+        <li>&#x2325; Option + Click again to unlock</li>
+      </ul>
+      <h2 style={h2}>Others</h2>
+      <ul style={ul}>
+        <li>It is important to keep your information accurate to minimize forecast mistakes</li>
+        <li>If you&#x2019;re unsure whether your balance is still accurate after an event like personal leave, update your balance snapshot in settings based on the PTO balance reflected on your pay slip</li>
+      </ul>
+      <p style={{ fontFamily: WORK, fontStyle: 'italic', fontSize: 14, color: BLACK, margin: '0 0 40px 0' }}>The end.</p>
     </div>
   );
 }
@@ -140,16 +188,16 @@ function PrivacyTab() {
     <div>
       <p style={small}>Last updated: May 12, 2026</p>
       <p style={h1}>Timeback helps you plan your time off, and your data stays private, period.</p>
-      <h2 style={h2}>What's Collected</h2>
+      <h2 style={h2}>What&#x2019;s collected</h2>
       <p style={p}>Your name and email (via Google Sign-In), plus any PTO data you enter — dates, balances, and settings.</p>
-      <h2 style={h2}>How Your Data Is Used</h2>
+      <h2 style={h2}>How your data is used</h2>
       <p style={p}>Only to run the app. Your data powers your calendar and balance calculations. It is never sold, shared, or used for advertising — ever.</p>
-      <h2 style={h2}>Where Your Data Is Stored</h2>
+      <h2 style={h2}>Where your data is stored</h2>
       <p style={p}>Securely in Supabase, isolated to your account. Other users cannot see your data, and the developer will never view or use it.</p>
-      <h2 style={h2}>Google Sign-In</h2>
+      <h2 style={h2}>Google sign-in</h2>
       <p style={p}>Google is used only for authentication. Timeback does not access Gmail, Google Calendar, or any other Google services.</p>
-      <h2 style={h2}>Deleting Your Data</h2>
-      <p style={p}>You're in full control. Permanently delete your account and all associated data anytime from the Settings tab.</p>
+      <h2 style={h2}>Deleting your data</h2>
+      <p style={p}>You&#x2019;re in full control. Permanently delete your account and all associated data anytime from the Settings tab.</p>
       <p style={{ fontFamily: WORK, fontStyle: 'italic', fontSize: 14, color: BLACK, margin: '0 0 40px 0' }}>The end.</p>
     </div>
   );
