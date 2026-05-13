@@ -126,6 +126,7 @@ Unpaid leave excluded from all balance calculations.
 - Service-year milestones: accrual rate bumps at 5yr and 10yr marks (computed per user).
 - FY rollover: caps balance at 200 hrs **only at Aug 31** — balance can exceed 200 hrs mid-year.
 - Feasibility checking per planned date based on projected accruals.
+- CUL popup option hidden when `culRemaining <= 0` (respects onboarding-configured cultural day balance, not just the default 2).
 
 ## Design system
 
@@ -169,7 +170,7 @@ S.shadowThumb          → "0 1px 4px rgba(0,0,0,0.12)"  / "0 2px 6px rgba(0,0,0
 Theme (Light / Dark / System) in Settings. Default is `system`.
 
 **Layout:**
-- Sticky header: balance stats + year nav + panel toggle + divider
+- Sticky header: 2 stats (PTO Days / By Dec 31, CUL Days / As of today) + year nav + panel toggle + divider
 - Calendar grid: `repeat(auto-fill, minmax(260px, 1fr))` — 4 cols desktop, responsive to 1 col
 - Fluid circular cells: `width: 100%, aspectRatio: 1, borderRadius: 999`
 - Side panel: animated width `0 ↔ 360px`, pushes calendar (not overlay)
