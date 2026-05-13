@@ -1257,6 +1257,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
         });
       }}>
 
+      {active && <div onClick={function() { setActive(null); }} style={{ position: "fixed", inset: 0, zIndex: 99 }} />}
+
       {toast ? <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: S.text, color: S.bg, padding: "10px 20px", borderRadius: 999, ...T.body.sm, zIndex: 1000, whiteSpace: "nowrap", animation: toastVisible ? "toastIn 200ms cubic-bezier(0.4, 0, 0, 1) both" : "toastOut 200ms cubic-bezier(0.4, 0, 0, 1) both" }}>{toast}</div> : null}
 
       {/* Panel toggle - 4 dot grid (fixed position, desktop only) */}
