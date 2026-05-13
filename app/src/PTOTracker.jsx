@@ -1312,46 +1312,52 @@ function PTOTrackerApp({ user, theme, setTheme }) {
         <div style={{ flexShrink: 0, zIndex: 600, background: S.bg, boxShadow: headerScrolled ? S.shadowHeader : "none", transition: "box-shadow 200ms cubic-bezier(0.4, 0, 0, 1)" }}>
           <div style={{ padding: isMobile ? "20px 20px 24px 20px" : "24px 40px 24px 40px" }}>
             {/* Mobile stats row (compact) - hidden when panel active */}
-            {isMobile && (
-              <div style={{ display: "flex", marginBottom: showPanel ? 0 : 40, maxHeight: showPanel ? 0 : 120, opacity: showPanel ? 0 : 1, overflow: "hidden", transition: "max-height 400ms cubic-bezier(0.4, 0, 0, 1), opacity 400ms cubic-bezier(0.4, 0, 0, 1), margin-bottom 400ms cubic-bezier(0.4, 0, 0, 1)" }}>
-                <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 44 }} />
-                  <div style={{ position: "relative", top: -6 }}>
-                    <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO</div>
-                    <div style={{ ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>Days</div>
+            {isMobile && (function() {
+              var todayLabel = "As of " + new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              return (
+                <div style={{ display: "flex", marginBottom: showPanel ? 0 : 40, maxHeight: showPanel ? 0 : 120, opacity: showPanel ? 0 : 1, overflow: "hidden", transition: "max-height 400ms cubic-bezier(0.4, 0, 0, 1), opacity 400ms cubic-bezier(0.4, 0, 0, 1), margin-bottom 400ms cubic-bezier(0.4, 0, 0, 1)" }}>
+                  <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 44 }} />
+                    <div style={{ position: "relative", top: -6 }}>
+                      <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO Days</div>
+                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>By Dec 31</div>
+                    </div>
+                  </div>
+                  <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 44 }} />
+                    <div style={{ position: "relative", top: -6 }}>
+                      <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL Days</div>
+                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>{todayLabel}</div>
+                    </div>
                   </div>
                 </div>
-                <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 44 }} />
-                  <div style={{ position: "relative", top: -6 }}>
-                    <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL</div>
-                    <div style={{ ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>Days</div>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Top Bar - desktop: stats left + nav right; mobile: nav row */}
             <div style={{ display: "flex", justifyContent: isMobile ? "center" : "space-between", alignItems: "center", flexWrap: isMobile ? "nowrap" : "wrap", gap: isMobile ? 8 : 20 }}>
               {/* Desktop stats (already rendered above on mobile) */}
-              {!isMobile && (
-                <div style={{ display: "flex", gap: 40 }}>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-                    <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 54 }} />
-                    <div style={{ position: "relative", marginBottom: 12 }}>
-                      <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO</div>
-                      <div style={{ ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>Days</div>
+              {!isMobile && (function() {
+                var todayLabel = "As of " + new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                return (
+                  <div style={{ display: "flex", gap: 40 }}>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+                      <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 54 }} />
+                      <div style={{ position: "relative", marginBottom: 12 }}>
+                        <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO Days</div>
+                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>By Dec 31</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+                      <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 54 }} />
+                      <div style={{ position: "relative", marginBottom: 12 }}>
+                        <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL Days</div>
+                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>{todayLabel}</div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-                    <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 54 }} />
-                    <div style={{ position: "relative", marginBottom: 12 }}>
-                      <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL</div>
-                      <div style={{ ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>Days</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Year nav row */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, width: isMobile ? "100%" : "auto", marginRight: isMobile ? 0 : (showPanel ? 0 : 56), transition: "margin-right 400ms cubic-bezier(0.4, 0, 0, 1)" }}>
