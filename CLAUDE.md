@@ -110,7 +110,13 @@ Milestones are computed dynamically from each user's service start date.
 
 ### Balance calculation
 
-`currentBal = snapshotBal + accruedSinceSnapshot − daysTakenSinceSnapshot × 8`
+`currentBal` is computed by walking FY by FY from the snapshot date to today, applying the 200-hr carryover cap at each Aug 31 boundary crossed:
+
+1. Start with `snapshotBal` at `balDate`
+2. For each Aug 31 between `balDate` and today: add accruals, subtract PTO taken, then `min(balance, 200)`
+3. Add remaining accruals and PTO from the last Aug 31 to today
+
+This ensures a user whose balance would have been capped in a prior FY doesn't carry an inflated balance into the current year. Mid-year the balance **can** legitimately exceed 200 hrs (e.g. 25 days carried over + ~25 days accrued = ~50 days peak).
 
 Unpaid leave excluded from all balance calculations.
 
@@ -118,7 +124,7 @@ Unpaid leave excluded from all balance calculations.
 - Dynamic PLAN colors: lime if projected balance covers it, coral if not feasible.
 - Year-aware stats: switching years recalculates everything.
 - Service-year milestones: accrual rate bumps at 5yr and 10yr marks (computed per user).
-- FY rollover: caps balance at 200 hrs when crossing Aug 31.
+- FY rollover: caps balance at 200 hrs **only at Aug 31** — balance can exceed 200 hrs mid-year.
 - Feasibility checking per planned date based on projected accruals.
 
 ## Design system

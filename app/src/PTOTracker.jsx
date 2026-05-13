@@ -760,21 +760,34 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       if (t === "CUL" || t === "PLAN_CUL") culByYear[y] = (culByYear[y] || 0) + 1;
     });
 
-    // Auto-compute current balance: snapshot + accruals to today − days taken since snapshot
-    var accToToday = 0;
-    PAY_PERIOD_ENDS.forEach(function(pp) {
-      if (pp > asOf && pp <= today)
-        accToToday += rateForPP(pp);
-    });
-    var takenSinceSnapshot = 0;
-    entries.forEach(function(entry) {
-      var k = entry[0], t = entry[1];
-      if (t === "PTO") {
-        var d = new Date(k);
-        if (d > asOf && d <= today) takenSinceSnapshot++;
+    // Auto-compute current balance: walk FY by FY from snapshot to today,
+    // applying the 200-hr carryover cap at each Aug 31 boundary crossed.
+    var currentBal = (function() {
+      var runBal = bal;
+      var segStart = asOf;
+      var fyEndYear = asOf.getMonth() >= 8 ? asOf.getFullYear() + 1 : asOf.getFullYear();
+      var nextFYEnd = new Date(fyEndYear, 7, 31);
+      while (nextFYEnd < today) {
+        PAY_PERIOD_ENDS.forEach(function(pp) {
+          if (pp > segStart && pp <= nextFYEnd) runBal += rateForPP(pp);
+        });
+        entries.forEach(function(entry) {
+          var k = entry[0], t = entry[1];
+          if (t === "PTO") { var d = new Date(k); if (d > segStart && d <= nextFYEnd) runBal -= HOURS_PER_DAY; }
+        });
+        runBal = Math.min(runBal, 200);
+        segStart = nextFYEnd;
+        nextFYEnd = new Date(nextFYEnd.getFullYear() + 1, 7, 31);
       }
-    });
-    var currentBal = bal + accToToday - takenSinceSnapshot * HOURS_PER_DAY;
+      PAY_PERIOD_ENDS.forEach(function(pp) {
+        if (pp > segStart && pp <= today) runBal += rateForPP(pp);
+      });
+      entries.forEach(function(entry) {
+        var k = entry[0], t = entry[1];
+        if (t === "PTO") { var d = new Date(k); if (d > segStart && d <= today) runBal -= HOURS_PER_DAY; }
+      });
+      return runBal;
+    })();
 
     // Future accruals: today → FY end
     var futAcc = 0;
@@ -1151,7 +1164,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
             persistSettings({ lockedDates: nextLockedClear });
             setActive(null);
           } else {
-            var culExhausted = (stats.culByYear[year] || 0) >= CUL_DAYS_TOTAL;
+            var culExhausted = stats.culRemaining <= 0;
             if (culExhausted) {
               // CUL cap reached for this year — assign PTO directly, no popup
               var directType = isPast ? "PTO" : "PLAN";
