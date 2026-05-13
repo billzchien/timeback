@@ -173,8 +173,8 @@ Theme (Light / Dark / System) in Settings. Default is `system`.
 1. ~~Google sign-in + sign-out~~ ✓ Done
 2. ~~Onboarding flow (name, CL, service date, balance snapshot)~~ ✓ Done
 3. ~~Per-user data with RLS~~ ✓ Done
-4. ~~Account deletion + logout~~ ✓ Done
-5. Publish Google OAuth app (currently in testing mode)
+4. ~~Account deletion + logout~~ ✓ Done (real auth deletion via Edge Function with CORS)
+5. ~~Publish Google OAuth app~~ ✓ Done
 6. Multi-year view
 7. Export to CSV/Google Calendar
 
