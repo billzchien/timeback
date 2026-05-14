@@ -129,6 +129,15 @@ Unpaid leave excluded from all balance calculations.
 - CUL popup option hidden when `culRemaining <= 0` (respects onboarding-configured cultural day balance, not just the default 2).
 - **`totalAvailDays`**: header PTO stat = `currentBal + accruals(today→Dec31) − planned(today→Dec31)`, no carryover cap. Reacts to every planned day regardless of FY boundary. Resets naturally on Sep 1 when `currentBal` gets the Aug 31 cap applied.
 - **PTO planning gate**: when `totalAvailDays <= 0`, any attempt to plan a future PTO day (via popup or single-click) shows a toast "All PTO planned for the year" and does nothing. Prevents the header from going negative.
+- **Infeasible PLAN cell text**: always uses `P.maroon` (#400000) — dark red readable on coral in both light and dark themes.
+
+### Pay period generation
+`PAY_PERIOD_ENDS` is generated dynamically at module load: from Sep 2025 through `currentYear + 20`. This means the app never needs code changes to support future years — it extends automatically.
+
+### Year navigation & data retention
+- `minViewYear = Math.max(2026, currentYear - 5)` — computed per session in `PTOTrackerApp`.
+- Left arrow in year nav is disabled (faded, no cursor) at `minViewYear`; can't navigate before it.
+- On app load, any `pto_days` entries with dates before `minViewYear + "-01-01"` are deleted from Supabase and excluded from local state. This creates a rolling 5-year retention window (active starting when `currentYear − 5 > 2026`, i.e. 2032+).
 
 ## Design system
 
@@ -176,7 +185,7 @@ S.iconSubtle           → P.gray45     / P.lime35
 S.iconOnPto            → P.white      / P.inkDeep
 S.today / S.todayText  → P.black/P.white   / P.mint/P.inkDeep
 S.pto                  → P.lime       / P.lime
-S.ptoOver / Text       → P.coral/P.maroon
+S.ptoOver / Text       → P.coral / P.maroon (light) / P.coral (dark)
 S.cul                  → P.yellow     / P.lime05
 S.holiday              → P.yellowHi   / P.lime75
 S.unpaid               → P.limeDeep   / P.lime35

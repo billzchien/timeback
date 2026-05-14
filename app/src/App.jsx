@@ -214,7 +214,7 @@ function OnboardingScreen({ user, onComplete }) {
         </div>
 
         {/* Current Balance */}
-        <div style={{ marginBottom: 48 }}>
+        <div style={{ marginBottom: 24 }}>
           <div style={sec}>Current Balance</div>
           <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
             <div style={tile('bal')}>
@@ -233,6 +233,11 @@ function OnboardingScreen({ user, onComplete }) {
               onFocus={function() { setFocused('culBal'); }} onBlur={function() { setFocused(null); }} style={inp} />
           </div>
         </div>
+
+        {/* Helper text */}
+        <p style={{ fontFamily: WORK, fontSize: 12, fontWeight: 400, lineHeight: 1.5, color: GRAY45, margin: '0 0 40px' }}>
+          Your current PTO balance is reflected at the end of each pay statement. It can also be found in MyTE under the &lsquo;Summary&rsquo; tab. Make sure everything you enter is correct, as it&rsquo;s crucial for accurate calculation.
+        </p>
 
         {/* CTA */}
         <button onClick={saving ? undefined : handleSubmit} style={{

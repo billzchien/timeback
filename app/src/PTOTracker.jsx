@@ -52,9 +52,9 @@ const CUL_DAYS_TOTAL = 2;
 function getPayPeriodEndDates() {
   const dates = [];
   const interval = 365 / 24;
-  // Generate 15 fiscal years starting from FY2026 (Sep 2025) to cover future year views
-  for (let fy = 0; fy < 15; fy++) {
-    const start = new Date(2025 + fy, 8, 1); // Sep 1 of each year
+  const endYear = new Date().getFullYear() + 20;
+  for (let year = 2025; year < endYear; year++) {
+    const start = new Date(year, 8, 1); // Sep 1 of each year
     for (let i = 0; i < 24; i++) {
       const d = new Date(start);
       d.setDate(d.getDate() + Math.round(interval * (i + 1)));
@@ -186,7 +186,7 @@ var DARK_S = {
 
   pto:           P.lime,
   ptoOver:       P.coral,
-  ptoOverText:   P.maroon,
+  ptoOverText:   P.coral,
   cul:           P.lime05,
   holiday:       P.lime75,
   unpaid:        P.lime35,
@@ -471,6 +471,7 @@ function smoothScrollTo(container, targetEl, duration) {
 }
 
 function PTOTrackerApp({ user, theme, setTheme }) {
+  var minViewYear = Math.max(2026, new Date().getFullYear() - 5);
   var [fadeIn, setFadeIn] = useState(false);
   var [days, setDays] = useState(DEFAULT_DATA);
   var [viewYear, setViewYear] = useState(2026);
@@ -629,8 +630,14 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       try {
         var res = await supabase.from('pto_days').select('*').eq('user_id', user.id);
         if (!res.error && res.data && res.data.length > 0) {
+          var cutoff = minViewYear + "-01-01";
           var loaded_days = {};
-          res.data.forEach(function(row) { loaded_days[row.date] = row.type; });
+          var oldDates = [];
+          res.data.forEach(function(row) {
+            if (row.date >= cutoff) { loaded_days[row.date] = row.type; }
+            else { oldDates.push(row.date); }
+          });
+          if (oldDates.length > 0) await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', oldDates);
           prevDaysRef.current = loaded_days;
           setDays(loaded_days);
         }
@@ -1070,7 +1077,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       var feas = stats.feasibility[key];
       if (feas === false) {
         cellBg = S.ptoOver;
-        cellColor = S.ptoOverText;
+        cellColor = P.maroon;
       } else {
         cellBg = S.pto;
         cellColor = P.inkDeep;
@@ -1400,12 +1407,12 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                   padding: "0",
                   flex: isMobile ? 1 : "none",
                 }}>
-                  <div onClick={function() { setViewYear(viewYear - 1); smoothScrollTop(calendarScrollRef.current, 400); }}
-                    onMouseEnter={function(e){ e.currentTarget.style.background = S.border; e.currentTarget.style.color = S.iconSubtle; }}
-                    onMouseLeave={function(e){ e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = S.iconSubtle; }}
-                    onMouseDown={function(e){ e.currentTarget.style.background = S.text; e.currentTarget.style.color = S.bg; }}
-                    onMouseUp={function(e){ e.currentTarget.style.background = S.border; e.currentTarget.style.color = S.iconSubtle; }}
-                    style={{ width: isMobile ? 54 : 48, height: isMobile ? 54 : 48, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", userSelect: "none", color: S.iconSubtle }}>
+                  <div onClick={function() { if (viewYear > minViewYear) { setViewYear(viewYear - 1); smoothScrollTop(calendarScrollRef.current, 400); } }}
+                    onMouseEnter={function(e){ if (viewYear > minViewYear) { e.currentTarget.style.background = S.border; e.currentTarget.style.color = S.iconSubtle; } }}
+                    onMouseLeave={function(e){ e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = viewYear <= minViewYear ? S.textFaint : S.iconSubtle; }}
+                    onMouseDown={function(e){ if (viewYear > minViewYear) { e.currentTarget.style.background = S.text; e.currentTarget.style.color = S.bg; } }}
+                    onMouseUp={function(e){ if (viewYear > minViewYear) { e.currentTarget.style.background = S.border; e.currentTarget.style.color = S.iconSubtle; } }}
+                    style={{ width: isMobile ? 54 : 48, height: isMobile ? 54 : 48, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", cursor: viewYear <= minViewYear ? "default" : "pointer", userSelect: "none", color: viewYear <= minViewYear ? S.textFaint : S.iconSubtle }}>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -1633,30 +1640,62 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                 {/* Balance Section — first: no top border */}
                 <div style={{ marginBottom: 48 }}>
                   <div style={{ ...T.label.base, color: S.textSubtle, marginBottom: 20 }}>{"Balance FY" + viewYear}</div>
-                  <div style={{ display: "flex", gap: 24 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...T.num, color: stats.balHrs < 0 ? S.ptoOverText : S.text }}>
-                        {(stats.balHrs / HOURS_PER_DAY).toFixed(1)}
+                  {(function() {
+                    var carryHrs = Math.min(Math.max(0, stats.eoy), 200);
+                    var lostHrs = Math.max(0, stats.eoy - 200);
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+                        <div style={{ display: "flex", gap: 24 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...T.num, color: stats.balHrs < 0 ? S.ptoOverText : S.text }}>
+                              {(stats.balHrs / HOURS_PER_DAY).toFixed(1)}
+                            </div>
+                            <div style={{ ...T.body.smAlt, color: stats.balHrs < 0 ? S.ptoOverText : S.text, lineHeight: 1.5 }}>
+                              {"days or " + stats.balHrs + " hrs"}
+                            </div>
+                            <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
+                              {"as of today"}
+                            </div>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...T.num, color: stats.eoy < 0 ? S.ptoOverText : S.text }}>
+                              {stats.eoyDays.toFixed(1)}
+                            </div>
+                            <div style={{ ...T.body.smAlt, color: stats.eoy < 0 ? S.ptoOverText : S.text, lineHeight: 1.5 }}>
+                              {"days or " + stats.eoy.toFixed(1) + " hrs"}
+                            </div>
+                            <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
+                              remain by Aug 31
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 24 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...T.num, color: S.text }}>
+                              {(carryHrs / HOURS_PER_DAY).toFixed(1)}
+                            </div>
+                            <div style={{ ...T.body.smAlt, color: S.text, lineHeight: 1.5 }}>
+                              {"days or " + carryHrs.toFixed(1) + " hrs"}
+                            </div>
+                            <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
+                              will carry over
+                            </div>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ ...T.num, color: lostHrs > 0 ? S.ptoOver : S.text }}>
+                              {(lostHrs / HOURS_PER_DAY).toFixed(1)}
+                            </div>
+                            <div style={{ ...T.body.smAlt, color: lostHrs > 0 ? S.ptoOver : S.text, lineHeight: 1.5 }}>
+                              {"days or " + lostHrs.toFixed(1) + " hrs"}
+                            </div>
+                            <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
+                              will NOT carry over
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ ...T.body.smAlt, color: stats.balHrs < 0 ? S.ptoOverText : S.text, lineHeight: 1.5 }}>
-                        {"days / " + stats.balHrs + " hrs"}
-                      </div>
-                      <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
-                        {"as of today"}
-                      </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...T.num, color: stats.eoy < 0 ? S.ptoOverText : S.text }}>
-                        {stats.eoyDays.toFixed(1)}
-                      </div>
-                      <div style={{ ...T.body.smAlt, color: stats.eoy < 0 ? S.ptoOverText : S.text, lineHeight: 1.5 }}>
-                        {"days / " + stats.eoy.toFixed(1) + " hrs"}
-                      </div>
-                      <div style={{ ...T.body.sm, color: S.textSubtle, lineHeight: 1.5 }}>
-                        by Aug 31
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Accrual Rate Section */}
