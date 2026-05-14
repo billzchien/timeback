@@ -543,7 +543,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   // useEffect-deferred upsert race where a fast refresh cancels the request.
   function persistSettings(overrides) {
     var data = {
-      bal: bal, balDate: balDate, userName: userName, editCL: editCL,
+      bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL,
       approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr,
       mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme
     };
@@ -683,12 +683,12 @@ function PTOTrackerApp({ user, theme, setTheme }) {
 
   useEffect(function() {
     if (!loaded) return;
-    var data = { bal: bal, balDate: balDate, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme };
+    var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme };
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
       supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
     }
-  }, [bal, balDate, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme]);
+  }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme]);
 
   // Sync edit fields when settings tab opens
   useEffect(function() {
@@ -1417,7 +1417,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                       <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <span style={{ ...T.num, padding: "0 16px", flex: isMobile ? 1 : "none", textAlign: "center" }}>{viewYear}</span>
+                  <span style={{ ...T.num, width: isMobile ? "auto" : 72, flex: isMobile ? 1 : "none", textAlign: "center" }}>{viewYear}</span>
                   <div onClick={function() { setViewYear(viewYear + 1); smoothScrollTop(calendarScrollRef.current, 400); }}
                     onMouseEnter={function(e){ e.currentTarget.style.background = S.border; e.currentTarget.style.color = S.iconSubtle; }}
                     onMouseLeave={function(e){ e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = S.iconSubtle; }}
