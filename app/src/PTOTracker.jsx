@@ -474,7 +474,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   var minViewYear = Math.max(2026, new Date().getFullYear() - 5);
   var [fadeIn, setFadeIn] = useState(false);
   var [days, setDays] = useState(DEFAULT_DATA);
-  var [viewYear, setViewYear] = useState(2026);
+  var [viewYear, setViewYear] = useState(function() { var t = new Date(); return t.getMonth() >= 8 ? t.getFullYear() + 1 : t.getFullYear(); });
   var [loaded, setLoaded] = useState(false);
 
   // Fade in once data is loaded: double-RAF ensures the browser paints opacity:0 first
@@ -496,7 +496,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
   var [toast, setToast] = useState(null);
   var [toastVisible, setToastVisible] = useState(false);
   var [showPanel, setShowPanel] = useState(false);
-  var [panelTab, setPanelTab] = useState("write");
+  var [panelTab, setPanelTab] = useState("overview");
   var [sheetDragY, setSheetDragY] = useState(0);
   var sheetDragStart = useRef(null);
   var defaultName = (user && user.user_metadata && user.user_metadata.full_name) ? user.user_metadata.full_name.split(' ')[0] : '';
@@ -1560,8 +1560,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div style={{ display: "flex", gap: 20, padding: "0 20px", position: "relative" }}>
               {[
-                { key: "write", label: "PLAN" },
                 { key: "overview", label: "BALANCE" },
+                { key: "write", label: "PLAN" },
                 { key: "settings", label: "SETTINGS" },
               ].map(function(tab) {
                 var isActive = panelTab === tab.key;
@@ -1599,8 +1599,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               </div>
               <div ref={tabBarRef} style={{ display: "flex", gap: 20, marginBottom: 0, position: "relative", borderBottom: "0.5px solid " + S.border }}>
                 {[
-                  { key: "write", label: "PLAN" },
                   { key: "overview", label: "BALANCE" },
+                  { key: "write", label: "PLAN" },
                   { key: "settings", label: "SETTINGS" },
                 ].map(function(tab) {
                   var isActive = panelTab === tab.key;

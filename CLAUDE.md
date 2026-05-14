@@ -135,6 +135,7 @@ Unpaid leave excluded from all balance calculations.
 `PAY_PERIOD_ENDS` is generated dynamically at module load: from Sep 2025 through `currentYear + 20`. This means the app never needs code changes to support future years — it extends automatically.
 
 ### Year navigation & data retention
+- `viewYear` initializes dynamically based on the current FY: `month >= 8 ? year + 1 : year`. So on Sep 1, 2026 it defaults to 2027, etc. Never hardcoded.
 - `minViewYear = Math.max(2026, currentYear - 5)` — computed per session in `PTOTrackerApp`.
 - Left arrow in year nav is disabled (faded, no cursor) at `minViewYear`; can't navigate before it.
 - On app load, any `pto_days` entries with dates before `minViewYear + "-01-01"` are deleted from Supabase and excluded from local state. This creates a rolling 5-year retention window (active starting when `currentYear − 5 > 2026`, i.e. 2032+).
