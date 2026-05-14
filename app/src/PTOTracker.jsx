@@ -346,20 +346,22 @@ function AnimatedDigit({ digit, slotState }) {
 }
 
 function AnimatedNumber({ value, style }) {
+  var isNeg = value < 0;
+  var absValue = isNeg ? Math.abs(value) : value;
   var keyRef = useRef(0);
-  var prevValueRef = useRef(value);
+  var prevValueRef = useRef(absValue);
   var [slots, setSlots] = useState(function() {
-    return String(value).split('').map(function(d, i) {
+    return String(absValue).split('').map(function(d, i) {
       return { digit: parseInt(d, 10), key: 's' + i, state: 'normal' };
     });
   });
 
   useEffect(function() {
     var prev = prevValueRef.current;
-    if (value === prev) return;
-    prevValueRef.current = value;
+    if (absValue === prev) return;
+    prevValueRef.current = absValue;
     var prevStr = String(prev);
-    var currStr = String(value);
+    var currStr = String(absValue);
 
     if (prevStr.length === currStr.length) {
       setSlots(function(old) {
@@ -401,10 +403,11 @@ function AnimatedNumber({ value, style }) {
         });
       }, 210);
     }
-  }, [value]);
+  }, [absValue]);
 
   return (
-    <span style={Object.assign({ display: 'inline-flex' }, style)}>
+    <span style={Object.assign({ display: 'inline-flex', alignItems: 'center' }, style)}>
+      {isNeg && <span style={{ marginRight: 1 }}>-</span>}
       {slots.map(function(slot) {
         return <AnimatedDigit key={slot.key} digit={slot.digit} slotState={slot.state} />;
       })}
@@ -905,6 +908,19 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       eocyDays = Math.floor(runBal / HOURS_PER_DAY);
     }
 
+    // Total available days through Dec 31 — no carryover cap, just raw pool.
+    // Naturally resets on Sep 1 because currentBal already has the Aug 31 cap applied.
+    var accToEOCY = 0;
+    PAY_PERIOD_ENDS.forEach(function(pp) {
+      if (pp > today && pp <= EOCY) accToEOCY += rateForPP(pp);
+    });
+    var plannedToEOCY = 0;
+    entries.forEach(function(entry) {
+      var k = entry[0], t = entry[1];
+      if (t === "PLAN") { var d = new Date(k); if (d > today && d <= EOCY) plannedToEOCY++; }
+    });
+    var totalAvailDays = Math.floor((currentBal + accToEOCY) / HOURS_PER_DAY) - plannedToEOCY;
+
     return {
       ptoUsed: ptoUsed, ptoPlanned: ptoPlanned,
       culUsed: culUsed, culPlanned: culPlanned,
@@ -912,7 +928,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       culByYear: culByYear,
       balHrs: currentBal, futAcc: futAcc, eoy: eoy,
       eoyDays: eoy / HOURS_PER_DAY, avail: avail,
-      eocyDays: eocyDays,
+      eocyDays: eocyDays, totalAvailDays: totalAvailDays,
       feasibility: feasibility,
     };
   }, [days, bal, balDate, viewYear, startStr, editCL, mlDateStr]);
@@ -1014,6 +1030,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     var isPast = dateObj < today;
 
     if (option === "pto") {
+      if (!isPast && stats.totalAvailDays <= 0) { notify("All PTO planned for the year"); return; }
       var type = isPast ? "PTO" : "PLAN";
       toggle(key, type);
       if (!isPast) triggerPop(key);
@@ -1166,10 +1183,9 @@ function PTOTrackerApp({ user, theme, setTheme }) {
           } else {
             var culExhausted = stats.culRemaining <= 0;
             if (culExhausted) {
-              // CUL cap reached for this year — assign PTO directly, no popup
-              var directType = isPast ? "PTO" : "PLAN";
-              toggle(key, directType);
-              if (!isPast) triggerPop(key);
+              // CUL cap reached — assign PTO directly, no popup
+              if (!isPast && stats.totalAvailDays <= 0) { notify("All PTO planned for the year"); }
+              else { var directType = isPast ? "PTO" : "PLAN"; toggle(key, directType); if (!isPast) triggerPop(key); }
             } else {
               // Show popup to choose PTO or CUL
               setActive(isAct ? null : key);
@@ -1317,10 +1333,10 @@ function PTOTrackerApp({ user, theme, setTheme }) {
               return (
                 <div style={{ display: "flex", marginBottom: showPanel ? 0 : 40, maxHeight: showPanel ? 0 : 120, opacity: showPanel ? 0 : 1, overflow: "hidden", transition: "max-height 400ms cubic-bezier(0.4, 0, 0, 1), opacity 400ms cubic-bezier(0.4, 0, 0, 1), margin-bottom 400ms cubic-bezier(0.4, 0, 0, 1)" }}>
                   <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 44 }} />
+                    <AnimatedNumber value={stats.totalAvailDays} style={{ ...T.stat, fontSize: 44 }} />
                     <div style={{ position: "relative", top: -6 }}>
                       <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO Days</div>
-                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>By Dec 31</div>
+                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>Thru Dec 31</div>
                     </div>
                   </div>
                   <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -1342,10 +1358,10 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                 return (
                   <div style={{ display: "flex", gap: 40 }}>
                     <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-                      <AnimatedNumber value={stats.eocyDays} style={{ ...T.stat, fontSize: 54 }} />
+                      <AnimatedNumber value={stats.totalAvailDays} style={{ ...T.stat, fontSize: 54 }} />
                       <div style={{ position: "relative", marginBottom: 12 }}>
                         <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>PTO Days</div>
-                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>By Dec 31</div>
+                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>Thru Dec 31</div>
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
