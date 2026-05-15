@@ -81,7 +81,7 @@ export default function About() {
 
         {/* Tab bar — matches panel tab style */}
         <div ref={tabBarRef} style={{ display: 'flex', gap: 20, position: 'relative', borderBottom: '0.5px solid ' + GRAY15, marginBottom: 40 }}>
-          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy'], ['support', 'Tip Jar']].map(function(pair) {
+          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy'], ['support', 'Say Thanks']].map(function(pair) {
             var key = pair[0], label = pair[1];
             var active = tab === key;
             return (
