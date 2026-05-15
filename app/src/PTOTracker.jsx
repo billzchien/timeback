@@ -1384,7 +1384,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
           <div style={{ padding: isMobile ? "20px 20px 24px 20px" : "24px 40px 24px 40px" }}>
             {/* Mobile stats row (compact) - hidden when panel active */}
             {isMobile && (function() {
-              var todayLabel = "As of " + new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
               return (
                 <div style={{ display: "flex", marginBottom: showPanel ? 0 : 40, maxHeight: showPanel ? 0 : 120, opacity: showPanel ? 0 : 1, overflow: "hidden", transition: "max-height 400ms cubic-bezier(0.4, 0, 0, 1), opacity 400ms cubic-bezier(0.4, 0, 0, 1), margin-bottom 400ms cubic-bezier(0.4, 0, 0, 1)" }}>
                   <div style={{ width: "50%", display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -1398,7 +1397,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                     <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 44 }} />
                     <div style={{ position: "relative", top: -6 }}>
                       <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL Days</div>
-                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>{todayLabel}</div>
+                      <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>As of today</div>
                     </div>
                   </div>
                 </div>
@@ -1409,7 +1408,6 @@ function PTOTrackerApp({ user, theme, setTheme }) {
             <div style={{ display: "flex", justifyContent: isMobile ? "center" : "space-between", alignItems: "center", flexWrap: isMobile ? "nowrap" : "wrap", gap: isMobile ? 8 : 20 }}>
               {/* Desktop stats (already rendered above on mobile) */}
               {!isMobile && (function() {
-                var todayLabel = "As of " + new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
                 return (
                   <div style={{ display: "flex", gap: 40 }}>
                     <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
@@ -1423,7 +1421,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                       <AnimatedNumber value={stats.culRemaining} style={{ ...T.stat, fontSize: 54 }} />
                       <div style={{ position: "relative", marginBottom: 12 }}>
                         <div style={{ position: "absolute", bottom: "100%", marginBottom: 3, ...T.label.alt, color: S.text, lineHeight: 1, whiteSpace: "nowrap" }}>CUL Days</div>
-                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>{todayLabel}</div>
+                        <div style={{ ...T.label.base, color: S.textSubtle, lineHeight: 1, whiteSpace: "nowrap" }}>As of today</div>
                       </div>
                     </div>
                   </div>
