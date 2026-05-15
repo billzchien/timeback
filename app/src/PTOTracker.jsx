@@ -49,18 +49,66 @@ function getClRates(cl) {
 const HOURS_PER_DAY = 8;
 const CUL_DAYS_TOTAL = 2;
 
+function toDateStr(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function getFederalHolidays(year) {
+  var h = new Set();
+  function addObs(d) {
+    var obs = new Date(d), day = obs.getDay();
+    if (day === 6) obs.setDate(obs.getDate() - 1);
+    else if (day === 0) obs.setDate(obs.getDate() + 1);
+    h.add(toDateStr(obs));
+  }
+  function nthMon(month, n) {
+    var d = new Date(year, month, 1);
+    d.setDate(1 + (1 - d.getDay() + 7) % 7 + (n - 1) * 7);
+    return d;
+  }
+  function lastMon(month) {
+    var d = new Date(year, month + 1, 0);
+    d.setDate(d.getDate() - (d.getDay() - 1 + 7) % 7);
+    return d;
+  }
+  function nthThu(month, n) {
+    var d = new Date(year, month, 1);
+    d.setDate(1 + (4 - d.getDay() + 7) % 7 + (n - 1) * 7);
+    return d;
+  }
+  addObs(new Date(year, 0, 1));       // New Year's Day
+  h.add(toDateStr(nthMon(0, 3)));     // MLK Day
+  h.add(toDateStr(nthMon(1, 3)));     // Presidents' Day
+  h.add(toDateStr(lastMon(4)));       // Memorial Day
+  addObs(new Date(year, 5, 19));      // Juneteenth
+  addObs(new Date(year, 6, 4));       // Independence Day
+  h.add(toDateStr(nthMon(8, 1)));     // Labor Day
+  h.add(toDateStr(nthMon(9, 2)));     // Columbus Day
+  addObs(new Date(year, 10, 11));     // Veterans Day
+  h.add(toDateStr(nthThu(10, 4)));    // Thanksgiving
+  addObs(new Date(year, 11, 25));     // Christmas
+  return h;
+}
+
 function getPayPeriodEndDates() {
-  const dates = [];
-  const interval = 365 / 24;
-  const endYear = new Date().getFullYear() + 20;
-  for (let year = 2025; year < endYear; year++) {
-    const start = new Date(year, 8, 1); // Sep 1 of each year
-    for (let i = 0; i < 24; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + Math.round(interval * (i + 1)));
-      dates.push(d);
+  var endYear = new Date().getFullYear() + 20;
+  var holidays = new Set();
+  for (var y = 2025; y <= endYear; y++) {
+    getFederalHolidays(y).forEach(function(d) { holidays.add(d); });
+  }
+  var dates = [];
+  for (var year = 2025; year < endYear; year++) {
+    for (var month = 0; month < 12; month++) {
+      [6, 21].forEach(function(dom) {
+        var d = new Date(year, month, dom);
+        while (d.getDay() === 0 || d.getDay() === 6 || holidays.has(toDateStr(d))) {
+          d.setDate(d.getDate() - 1);
+        }
+        dates.push(new Date(d));
+      });
     }
   }
+  dates.sort(function(a, b) { return a - b; });
   return dates;
 }
 const PAY_PERIOD_ENDS = getPayPeriodEndDates();
