@@ -124,16 +124,16 @@ function StoryTab() {
       <p style={p}>In the old days, planning PTO was simple. A set number of days, spend them whenever you want.</p>
       <p style={p}>Then everything changed.</p>
       <p style={p}>We now have two different cycles — fiscal year and calendar year — for two different types of time off. We can&#x2019;t use PTO before it accrues (yes, I got warned for going into negative balance). Checking your balance is inconvenient. All of this makes vacation planning unnecessarily hard.</p>
-      <p style={p}>I often say to my colleagues: we design great products for our clients, but we rarely think about ourselves. I had to do something about it — just like when I created Bill&#x2019;s Tool Box.</p>
+      <p style={p}>I often say to my colleagues: we design great products for our clients, but we rarely think about ourselves. I had to do something about it — just like when I created <a href="https://www.figma.com/design/38wGEXoTinic9m7PYDYcmV/%F0%9F%91%8C--Bill%E2%80%99s-Tool-Box?node-id=0-1&t=hMWcv7JCPYecAMM6-1" target="_blank" rel="noopener noreferrer" style={{ color: BLACK, textDecoration: 'underline', textUnderlineOffset: '3px' }}>Bill&#x2019;s Tool Box</a>.</p>
       <p style={p}>I needed an app that could forecast my balance, help me plan time off months in advance, and still follow company policy.</p>
       <p style={p}>My first version was a Google Sheet, which I&#x2019;m glad to find people actually using. Now, the timing couldn&#x2019;t be better to take it further — following a trend I&#x2019;ve been curious about: vibe coding. No business case, no timeline, no bothering anyone else. Just a designer, a vision, and a workstation.</p>
       <p style={p}>Timeback was born on a weekend when I decided to try Claude Code. Many days of back and forth to get things looking and feeling right. I was so excited watching my imagination come to life.</p>
-      <p style={p}>Now, I want to share that with you. Enjoy!</p>
+      <p style={Object.assign({}, p, { margin: '0 0 48px 0' })}>Now, I want to share that with you. Enjoy!</p>
       <a href="https://www.billchien.net/" target="_blank" rel="noopener noreferrer"
         onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
         onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
-        style={{ display: 'block', fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, lineHeight: 1.75, margin: '0 0 4px 0', textDecoration: 'none' }}>Bill Chien</a>
-      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.75, margin: '0 0 40px 0' }}>May 12, 2026</p>
+        style={{ display: 'block', fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, lineHeight: 1, margin: '0 0 8px 0', textDecoration: 'none' }}>Bill Chien</a>
+      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1, margin: '0 0 40px 0' }}>May 12, 2026</p>
     </div>
   );
 }
