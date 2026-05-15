@@ -81,7 +81,7 @@ export default function About() {
 
         {/* Tab bar — matches panel tab style */}
         <div ref={tabBarRef} style={{ display: 'flex', gap: 20, position: 'relative', borderBottom: '0.5px solid ' + GRAY15, marginBottom: 40 }}>
-          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy'], ['support', 'Say Thanks']].map(function(pair) {
+          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy'], ['support', 'Support Bill']].map(function(pair) {
             var key = pair[0], label = pair[1];
             var active = tab === key;
             return (
@@ -191,8 +191,10 @@ function SupportTab() {
   return (
     <div>
       <p style={h1}>Wanna buy me a&nbsp;matcha&nbsp;latte?</p>
-      <p style={p}>Timeback is a free personal project — built on weekends, fueled by matcha. If it makes your workday a little easier, a small contribution goes a long way in keeping it maintained and improving.</p>
-      <div style={{ display: 'flex', gap: 0, margin: '48px 0' }}>
+      <p style={p}>Timeback is a free personal project — built on weekends, fueled by matcha. If it makes your workday a little easier, a small contribution goes a long way in keeping it maintained and improving. This is totally optional! I appreciate your support.</p>
+      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: 0 }}>Cheers,</p>
+      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 400, color: BLACK, margin: '0 0 100px 0' }}>Bill</p>
+      <div style={{ display: 'flex', gap: 0 }}>
         <div style={{ flex: 1 }}>
           <h2 style={h2}>Zelle</h2>
           <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>Zheng Jian</p>
@@ -201,18 +203,15 @@ function SupportTab() {
             <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
           </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ position: 'relative', width: 120, height: 120, marginBottom: 16 }}>
+        <div style={{ flex: 1, paddingTop: 169 }}>
+          <h2 style={h2}>Venmo</h2>
+          <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>@billchien</p>
+          <div style={{ position: 'relative', width: 120, height: 120, marginTop: 16, marginBottom: 200 }}>
             <img src="/venmo-qr.png" alt="Venmo QR code" style={{ width: 120, height: 120, display: 'block' }} />
             <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
           </div>
-          <h2 style={h2}>Venmo</h2>
-          <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>@billchien</p>
         </div>
       </div>
-      <p style={p}>This is totally optional! I appreciate your support.</p>
-      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: 0 }}>Cheers,</p>
-      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 400, color: BLACK, margin: 0 }}>Bill</p>
     </div>
   );
 }
