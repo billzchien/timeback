@@ -195,7 +195,7 @@ function SupportTab() {
       <div style={{ display: 'flex', gap: 0, margin: '48px 0' }}>
         <div style={{ flex: 1 }}>
           <h2 style={h2}>Zelle</h2>
-          <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Zheng Jian</p>
+          <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>Zheng Jian</p>
           <div style={{ position: 'relative', width: 120, height: 120, marginTop: 16 }}>
             <img src="/zelle-qr.png" alt="Zelle QR code" style={{ width: 120, height: 120, display: 'block' }} />
             <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
@@ -207,7 +207,7 @@ function SupportTab() {
             <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
           </div>
           <h2 style={h2}>Venmo</h2>
-          <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Bill Chien</p>
+          <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>@billchien</p>
         </div>
       </div>
       <p style={p}>This is totally optional! And I appreciate your support.<br />Glad I could help in anyway.</p>
