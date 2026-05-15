@@ -196,10 +196,16 @@ function SupportTab() {
         <div style={{ flex: 1 }}>
           <h2 style={h2}>Zelle</h2>
           <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Zheng Jian</p>
-          <img src="/zelle-qr.png" alt="Zelle QR code" style={{ width: 120, height: 120, display: 'block', marginTop: 16 }} />
+          <div style={{ position: 'relative', width: 120, height: 120, marginTop: 16 }}>
+            <img src="/zelle-qr.png" alt="Zelle QR code" style={{ width: 120, height: 120, display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
+          </div>
         </div>
         <div style={{ flex: 1 }}>
-          <img src="/venmo-qr.png" alt="Venmo QR code" style={{ width: 120, height: 120, display: 'block', marginBottom: 16 }} />
+          <div style={{ position: 'relative', width: 120, height: 120, marginBottom: 16 }}>
+            <img src="/venmo-qr.png" alt="Venmo QR code" style={{ width: 120, height: 120, display: 'block' }} />
+            <div style={{ position: 'absolute', inset: 0 }} onContextMenu={function(e) { e.preventDefault(); }} />
+          </div>
           <h2 style={h2}>Venmo</h2>
           <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Bill Chien</p>
         </div>
