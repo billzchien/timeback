@@ -127,7 +127,7 @@ Unpaid leave excluded from all balance calculations.
 - FY rollover: caps balance at 200 hrs **only at Aug 31** — balance can exceed 200 hrs mid-year.
 - Feasibility checking per planned date based on projected accruals.
 - CUL popup option hidden when `culRemaining <= 0` (respects onboarding-configured cultural day balance, not just the default 2).
-- **`totalAvailDays`**: header PTO stat = `currentBal + accruals(today→Dec31) − planned(today→Dec31)`, no carryover cap. Reacts to every planned day regardless of FY boundary. Resets naturally on Sep 1 when `currentBal` gets the Aug 31 cap applied.
+- **`totalAvailDays`**: header PTO stat = `currentBal + accruals(today→Dec31 of viewYear) − planned(today→Dec31 of viewYear)`, no carryover cap. Updates when `viewYear` changes. Resets naturally on Sep 1 when `currentBal` gets the Aug 31 cap applied.
 - **PTO planning gate**: when `totalAvailDays <= 0`, any attempt to plan a future PTO day (via popup or single-click) shows a toast "All PTO planned for the year" and does nothing. Prevents the header from going negative.
 - **Infeasible PLAN cell text**: always uses `P.maroon` (#400000) — dark red readable on coral in both light and dark themes.
 

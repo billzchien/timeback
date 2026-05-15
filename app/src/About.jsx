@@ -20,6 +20,7 @@ function getTab() {
   var p = window.location.pathname;
   if (p === '/about/privacy') return 'privacy';
   if (p === '/about/guide') return 'guide';
+  if (p === '/about/support') return 'support';
   return 'story';
 }
 
@@ -46,7 +47,7 @@ export default function About() {
 
   function go(t) {
     setTab(t);
-    var url = t === 'privacy' ? '/about/privacy' : t === 'guide' ? '/about/guide' : '/about';
+    var url = t === 'privacy' ? '/about/privacy' : t === 'guide' ? '/about/guide' : t === 'support' ? '/about/support' : '/about';
     window.history.pushState({}, '', url);
   }
 
@@ -80,7 +81,7 @@ export default function About() {
 
         {/* Tab bar — matches panel tab style */}
         <div ref={tabBarRef} style={{ display: 'flex', gap: 20, position: 'relative', borderBottom: '0.5px solid ' + GRAY15, marginBottom: 40 }}>
-          {[['story', 'Story'], ['guide', 'Guide'], ['privacy', 'Privacy Policy']].map(function(pair) {
+          {[['story', 'Story'], ['guide', 'Guide'], ['support', 'Support'], ['privacy', 'Privacy Policy']].map(function(pair) {
             var key = pair[0], label = pair[1];
             var active = tab === key;
             return (
@@ -103,7 +104,7 @@ export default function About() {
           }} />
         </div>
 
-        {tab === 'story' ? <StoryTab /> : tab === 'guide' ? <GuideTab /> : <PrivacyTab />}
+        {tab === 'story' ? <StoryTab /> : tab === 'guide' ? <GuideTab /> : tab === 'support' ? <SupportTab /> : <PrivacyTab />}
       </div>
 
       <div style={{ height: 80 }} />
@@ -150,10 +151,10 @@ function GuideTab() {
         <li>Click any empty weekday to plan a day — PTO or Cultural Day</li>
         <li>Click a planned day to clear it</li>
       </ul>
-      <h2 style={h2}>Navigate calendar years</h2>
+      <h2 style={h2}>Understand your balance</h2>
       <ul style={ul}>
-        <li>Use the year navigation to move between calendar years</li>
-        <li>The balance on top reflects the days available in the current selected calendar year</li>
+        <li>The PTO balance at the top shows the available PTO days from today through the end of the currently selected calendar year</li>
+        <li>Fiscal year balance details can be found in the right panel</li>
       </ul>
       <h2 style={h2}>Planned PTO day color</h2>
       <ul style={ul}>
@@ -171,12 +172,41 @@ function GuideTab() {
         <li>&#x2325; Option + Click a planned day to lock it</li>
         <li>&#x2325; Option + Click again to unlock</li>
       </ul>
-      <h2 style={h2}>Others</h2>
+      <h2 style={h2}>Keep in mind</h2>
       <ul style={ul}>
         <li>It is important to keep your information accurate to minimize forecast mistakes</li>
         <li>If you&#x2019;re unsure whether your balance is still accurate after an event like personal leave, update your balance snapshot in settings based on the PTO balance reflected on your pay slip</li>
       </ul>
-      <p style={{ fontFamily: WORK, fontStyle: 'italic', fontSize: 14, color: BLACK, margin: '0 0 40px 0' }}>The end.</p>
+      <h2 style={h2}>More questions?</h2>
+      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: '0 0 40px 0' }}>Slack @bill, or send an email to bill.chien@work.co</p>
+    </div>
+  );
+}
+
+function SupportTab() {
+  var h1 = { fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, lineHeight: 1.1, letterSpacing: -1, color: BLACK, margin: '0 0 40px 0' };
+  var h2 = { fontFamily: GOUDY, fontStyle: 'italic', fontSize: 22, fontWeight: 400, lineHeight: 1, color: BLACK, margin: 0 };
+  var p  = { fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: '0 0 32px 0' };
+
+  return (
+    <div>
+      <p style={h1}>If you want to buy me a matcha latte...</p>
+      <p style={p}>Timeback is a free personal project — built on weekends, fueled by matcha. If it makes your workday a little easier, a small contribution goes a long way in keeping it maintained and improving.</p>
+      <div style={{ display: 'flex', gap: 0, margin: '48px 0' }}>
+        <div style={{ flex: 1 }}>
+          <h2 style={h2}>Zelle</h2>
+          <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Zheng Jian</p>
+          <img src="/zelle-qr.png" alt="Zelle QR code" style={{ width: 160, height: 160, display: 'block', marginTop: 16 }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <img src="/venmo-qr.png" alt="Venmo QR code" style={{ width: 160, height: 160, display: 'block', marginBottom: 16 }} />
+          <h2 style={h2}>Venmo</h2>
+          <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, margin: 0, lineHeight: 1 }}>Bill Chien</p>
+        </div>
+      </div>
+      <p style={p}>This is totally optional! And I appreciate your support.<br />Glad I could help in anyway.</p>
+      <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: 0 }}>Cheers,</p>
+      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, margin: 0 }}>Bill</p>
     </div>
   );
 }
