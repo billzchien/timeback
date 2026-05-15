@@ -190,7 +190,7 @@ function SupportTab() {
 
   return (
     <div>
-      <p style={h1}>If you want to buy me a matcha latte...</p>
+      <p style={h1}>Wanna buy me a&nbsp;matcha&nbsp;latte?</p>
       <p style={p}>Timeback is a free personal project — built on weekends, fueled by matcha. If it makes your workday a little easier, a small contribution goes a long way in keeping it maintained and improving.</p>
       <div style={{ display: 'flex', gap: 0, margin: '48px 0' }}>
         <div style={{ flex: 1 }}>
@@ -210,9 +210,9 @@ function SupportTab() {
           <p style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, margin: 0, lineHeight: 1 }}>@billchien</p>
         </div>
       </div>
-      <p style={p}>This is totally optional! And I appreciate your support.<br />Glad I could help in anyway.</p>
+      <p style={p}>This is totally optional! I appreciate your support.</p>
       <p style={{ fontFamily: WORK, fontSize: 14, color: BLACK, lineHeight: 1.7, margin: 0 }}>Cheers,</p>
-      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 500, color: BLACK, margin: 0 }}>Bill</p>
+      <p style={{ fontFamily: WORK, fontSize: 14, fontWeight: 400, color: BLACK, margin: 0 }}>Bill</p>
     </div>
   );
 }
