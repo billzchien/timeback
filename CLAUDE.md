@@ -132,7 +132,13 @@ Unpaid leave excluded from all balance calculations.
 - **Infeasible PLAN cell text**: always uses `P.maroon` (#400000) — dark red readable on coral in both light and dark themes.
 
 ### Pay period generation
-`PAY_PERIOD_ENDS` is generated dynamically at module load: from Sep 2025 through `currentYear + 20`. This means the app never needs code changes to support future years — it extends automatically.
+`PAY_PERIOD_ENDS` is generated dynamically at module load, covering 2025 through `currentYear + 20`.
+
+**Rule:** Accenture pays on the **6th and 21st of each month**. If either date falls on a weekend or US federal holiday, the pay date moves to the **prior business day**. This was confirmed against actual pay statements (Jul 2025 – May 2026).
+
+Example: July 6, 2025 is a Sunday → July 5 is Saturday → July 4 is Independence Day → pay date = **July 3 (Thursday)**.
+
+`getFederalHolidays(year)` computes all 11 US federal holidays algorithmically (nth-weekday rules for floating holidays, observed-date rules for fixed ones). No hardcoded date lists needed.
 
 ### Year navigation & data retention
 - `viewYear` initializes dynamically based on the current FY: `month >= 8 ? year + 1 : year`. So on Sep 1, 2026 it defaults to 2027, etc. Never hardcoded.
