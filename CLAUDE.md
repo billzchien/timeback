@@ -81,6 +81,11 @@ First-time users (no `pto_settings` row) are shown an onboarding screen to confi
 - **Click** an assigned day: clears the assignment.
 - **Drag** across empty weekdays: multi-select to plan days off. CUL days are consumed first (up to `culRemaining`), then PTO. Capped at `totalAvailDays` — preview stops growing when balance hits zero; toast fires if drag exceeded capacity. Commits atomically on mouseup (one undo step).
 - **Drag** across planned days: multi-select to remove planned days. Preview dims cells to ~20% opacity; all `PLAN`/`PLAN_CUL`/`PLAN_UNPAID` in range are cleared on mouseup.
+- **⌘ Cmd + drag** across `PLAN` days: bulk convert to unpaid leave (`PLAN_UNPAID`). Preview dims cells to ~35% opacity.
+- **⌘ Cmd + drag** across `PLAN_UNPAID` days: bulk convert back to `PLAN`. Preview dims cells to ~35% opacity.
+- **⌥ Option + drag** across unlocked planned days: bulk lock. Preview shows the lock dot at 40% opacity; circles stay full opacity.
+- **⌥ Option + drag** across locked planned days: bulk unlock. Lock dot fades to 40% opacity as preview.
+- **Locked days are immune to all drag operations** — only ⌥ Option+drag unlock can affect them.
 - **Cmd+Click** a planned PTO (`PLAN`) day: converts to planned unpaid leave (`PLAN_UNPAID`), restoring the PTO day to balance.
 - **Cmd+Click** a planned unpaid (`PLAN_UNPAID`) day: converts back to planned PTO (`PLAN`).
 - **Cmd+Z**: undo the last day assignment change (up to 20 steps, in-memory only).
