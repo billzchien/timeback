@@ -605,6 +605,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
   var historyRef = useRef([]);
   var redoRef = useRef([]);
   var daysRef = useRef(days);
+  var lockedDatesRef = useRef(lockedDates);
+  useEffect(function() { lockedDatesRef.current = lockedDates; }, [lockedDates]);
   var calendarScrollRef = useRef(null);
   var [headerScrolled, setHeaderScrolled] = useState(false);
 
@@ -689,8 +691,36 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       setDragPreviewDates([]);
       if (!dragRef.current.hasMoved || dates.length === 0) return;
       didDragRef.current = true;
-      pushHistory();
-      if (dragRef.current.dragMode === "remove") {
+      var mode = dragRef.current.dragMode;
+      if (mode === "to-unpaid") {
+        pushHistory();
+        setDays(function(prev) {
+          var u = Object.assign({}, prev);
+          dates.forEach(function(k) { if (u[k] === "PLAN") u[k] = "PLAN_UNPAID"; });
+          return u;
+        });
+      } else if (mode === "to-plan") {
+        pushHistory();
+        setDays(function(prev) {
+          var u = Object.assign({}, prev);
+          dates.forEach(function(k) { if (u[k] === "PLAN_UNPAID") u[k] = "PLAN"; });
+          return u;
+        });
+      } else if (mode === "lock" || mode === "unlock") {
+        var isLocking = mode === "lock";
+        var newLocked = Object.assign({}, lockedDatesRef.current);
+        var currDays = daysRef.current;
+        dates.forEach(function(k) {
+          var t = currDays[k];
+          if (t === "PLAN" || t === "PLAN_CUL" || t === "PLAN_UNPAID") {
+            if (isLocking) newLocked[k] = true;
+            else delete newLocked[k];
+          }
+        });
+        userChangedSettingsRef.current = true;
+        setLockedDates(newLocked);
+      } else if (mode === "remove") {
+        pushHistory();
         setDays(function(prev) {
           var u = Object.assign({}, prev);
           dates.forEach(function(k) {
@@ -1258,7 +1288,11 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     // Drag preview
     var dragIdx = dragPreviewDates.indexOf(key);
     var isDragPreview = dragIdx !== -1;
-    var isDragRemovePreview = isDragPreview && dragMode === "remove" && (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID");
+    var isPlanned = type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID";
+    var isDragRemovePreview  = isDragPreview && dragMode === "remove"    && isPlanned;
+    var isDragCmdPreview     = isDragPreview && dragMode === "to-unpaid" && type === "PLAN"
+                            || isDragPreview && dragMode === "to-plan"   && type === "PLAN_UNPAID";
+    var isDragLockPreview    = isDragPreview && (dragMode === "lock" || dragMode === "unlock") && isPlanned;
     if (isDragPreview && dragMode === "add") {
       var isDragCulPreview = dragIdx < stats.culRemaining;
       cellBg = isDragCulPreview ? S.cul : S.pto;
@@ -1270,7 +1304,18 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
         key={key}
         onMouseDown={function(e) {
           if (hol || wk || isPast || e.button !== 0) return;
-          var mode = (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID") ? "remove" : "add";
+          var mode;
+          if (e.metaKey) {
+            if (type === "PLAN") mode = "to-unpaid";
+            else if (type === "PLAN_UNPAID") mode = "to-plan";
+            else return;
+          } else if (e.altKey) {
+            if (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID") {
+              mode = lockedDates[key] ? "unlock" : "lock";
+            } else return;
+          } else {
+            mode = (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID") ? "remove" : "add";
+          }
           dragRef.current.isDragging = true;
           dragRef.current.anchor = key;
           dragRef.current.hasMoved = false;
@@ -1375,7 +1420,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           boxShadow: isAct ? "0 0 0 0.5px " + S.border : "none",
           transition: isDragPreview ? "none" : "background 0.15s, box-shadow 0.15s",
           animation: justToggled[key] ? "dayCellPop 100ms cubic-bezier(0.4, 0, 0, 1) both" : "none",
-          opacity: isDragRemovePreview ? 0.2 : (isDragPreview && dragMode === "add") ? 0.6 : 1,
+          opacity: isDragRemovePreview ? 0.2 : isDragCmdPreview ? 0.35 : isDragLockPreview ? 0.35 : (isDragPreview && dragMode === "add") ? 0.6 : 1,
         }} />
         {(type === "PLAN_UNPAID" || type === "UNPAID") && (
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100">
