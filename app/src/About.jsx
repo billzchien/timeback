@@ -64,7 +64,7 @@ export default function About() {
 
       {/* Hero: lime circle matching login screen size and top position */}
       <div className="tb-about-hero" style={{
-        paddingTop: 'max(40px, calc(50vh - 265px))', paddingBottom: 80,
+        paddingTop: 'max(40px, calc(50vh - 275px))', paddingBottom: 80,
         display: 'flex', justifyContent: 'center', boxSizing: 'border-box',
       }}>
         <a href="/"
