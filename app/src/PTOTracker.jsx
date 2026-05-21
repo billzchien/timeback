@@ -122,6 +122,22 @@ function isWknd(y, m, d) { var w = dayOfWeek(y, m, d); return w === 0 || w === 6
 function isHol(key) { return key in ALL_HOLIDAYS; }
 function isOtherHol(key) { return key in OTHER_HOLIDAYS; }
 
+function getDatesInRange(startKey, endKey) {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var start = new Date(startKey + "T12:00:00");
+  var end = new Date(endKey + "T12:00:00");
+  if (start > end) { var tmp = start; start = end; end = tmp; }
+  var dates = [];
+  var cur = new Date(start);
+  while (cur <= end) {
+    var dow = cur.getDay();
+    var k = toDateStr(cur);
+    if (dow !== 0 && dow !== 6 && !isHol(k) && cur >= today) dates.push(k);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
 var DEFAULT_DATA = {};
 
 var mono = "'Space Mono', monospace";
@@ -581,6 +597,10 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
   var [showHolidays, setShowHolidays] = useState("acn");
   var [calFading, setCalFading] = useState(false);
   var [modKeyDown, setModKeyDown] = useState(false);
+  var didDragRef = useRef(false);
+  var dragRef = useRef({ isDragging: false, anchor: null, hasMoved: false, dates: [] });
+  var [dragPreviewDates, setDragPreviewDates] = useState([]);
+  var [dragMode, setDragMode] = useState("add");
   // Derived — no state needed
   var historyRef = useRef([]);
   var redoRef = useRef([]);
@@ -660,6 +680,42 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     };
   }, []);
 
+
+  useEffect(function() {
+    function onMouseUp() {
+      if (!dragRef.current.isDragging) return;
+      dragRef.current.isDragging = false;
+      var dates = dragRef.current.dates || [];
+      setDragPreviewDates([]);
+      if (!dragRef.current.hasMoved || dates.length === 0) return;
+      didDragRef.current = true;
+      pushHistory();
+      if (dragRef.current.dragMode === "remove") {
+        setDays(function(prev) {
+          var u = Object.assign({}, prev);
+          dates.forEach(function(k) {
+            if (u[k] === "PLAN" || u[k] === "PLAN_CUL" || u[k] === "PLAN_UNPAID") delete u[k];
+          });
+          return u;
+        });
+      } else {
+        var culAvail = Math.max(0, statsRef.current ? statsRef.current.culRemaining : 0);
+        var ptoAvail = Math.max(0, statsRef.current ? statsRef.current.totalAvailDays : 0);
+        var culDates = dates.slice(0, culAvail);
+        var ptoDates = dates.slice(culAvail, culAvail + ptoAvail);
+        var hasExcess = dates.length > culDates.length + ptoDates.length;
+        setDays(function(prev) {
+          var u = Object.assign({}, prev);
+          culDates.forEach(function(k) { u[k] = "PLAN_CUL"; });
+          ptoDates.forEach(function(k) { u[k] = "PLAN"; });
+          return u;
+        });
+        if (hasExcess) notify("All PTO planned for the year");
+      }
+    }
+    document.addEventListener("mouseup", onMouseUp);
+    return function() { document.removeEventListener("mouseup", onMouseUp); };
+  }, [pushHistory]);
 
   useEffect(function() {
     function handleResize() {
@@ -1001,6 +1057,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     };
   }, [days, bal, balDate, viewYear, startStr, editCL, mlDateStr]);
 
+  var statsRef = useRef(stats);
+  useEffect(function() { statsRef.current = stats; }, [stats]);
 
   // Group future PLAN/PLAN_CUL dates into consecutive blocks (weekends/holidays don't break a group)
   var writePlanGroups = useMemo(function() {
@@ -1197,11 +1255,34 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       ptoFeasible = (bal + hypAcc - (hypUsed + 1) * HOURS_PER_DAY) >= 0;
     }
 
+    // Drag preview
+    var dragIdx = dragPreviewDates.indexOf(key);
+    var isDragPreview = dragIdx !== -1;
+    var isDragRemovePreview = isDragPreview && dragMode === "remove" && (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID");
+    if (isDragPreview && dragMode === "add") {
+      var isDragCulPreview = dragIdx < stats.culRemaining;
+      cellBg = isDragCulPreview ? S.cul : S.pto;
+      cellColor = P.inkDeep;
+    }
+
     return (
       <div
         key={key}
+        onMouseDown={function(e) {
+          if (hol || wk || isPast || e.button !== 0) return;
+          var mode = (type === "PLAN" || type === "PLAN_CUL" || type === "PLAN_UNPAID") ? "remove" : "add";
+          dragRef.current.isDragging = true;
+          dragRef.current.anchor = key;
+          dragRef.current.hasMoved = false;
+          dragRef.current.dates = [key];
+          dragRef.current.current = key;
+          dragRef.current.dragMode = mode;
+          setDragMode(mode);
+        }}
+        onDragStart={function(e) { e.preventDefault(); }}
         onClick={function(e) {
           e.stopPropagation();
+          if (didDragRef.current) { didDragRef.current = false; return; }
           if (hol || wk) { setActive(null); return; }
           if (isPast && !e.altKey) { setActive(null); return; }
           // L+click: toggle locked state on future planned dates
@@ -1262,7 +1343,20 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
         }}
         data-date={key}
         data-holiday={hol || otherHol ? "true" : undefined}
-        onMouseEnter={hol || otherHol ? function() { setTooltip(key); } : null}
+        onMouseEnter={function() {
+          if (hol || otherHol) setTooltip(key);
+          if (!dragRef.current.isDragging) return;
+          var newDates = getDatesInRange(dragRef.current.anchor, key);
+          dragRef.current.current = key;
+          dragRef.current.hasMoved = dragRef.current.anchor !== key;
+          if (dragRef.current.dragMode === "add") {
+            var culAvail = Math.max(0, stats.culRemaining);
+            var ptoAvail = Math.max(0, stats.totalAvailDays);
+            newDates = newDates.slice(0, culAvail + ptoAvail);
+          }
+          dragRef.current.dates = newDates;
+          setDragPreviewDates(newDates.slice());
+        }}
         onMouseLeave={hol || otherHol ? function() { setTooltip(null); } : null}
         style={{
           position: "relative", width: "100%", aspectRatio: "1",
@@ -1276,11 +1370,12 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       >
         <div style={{
           position: "absolute", inset: 0, borderRadius: 999,
-          background: (type === "PLAN_UNPAID" || type === "UNPAID") ? "transparent" : cellBg,
+          background: isDragPreview ? cellBg : (type === "PLAN_UNPAID" || type === "UNPAID") ? "transparent" : cellBg,
           border: highlightedDates.indexOf(key) !== -1 ? "1px solid " + S.unpaid : "none",
           boxShadow: isAct ? "0 0 0 0.5px " + S.border : "none",
-          transition: "background 0.15s, box-shadow 0.15s",
+          transition: isDragPreview ? "none" : "background 0.15s, box-shadow 0.15s",
           animation: justToggled[key] ? "dayCellPop 100ms cubic-bezier(0.4, 0, 0, 1) both" : "none",
+          opacity: isDragRemovePreview ? 0.2 : (isDragPreview && dragMode === "add") ? 0.6 : 1,
         }} />
         {(type === "PLAN_UNPAID" || type === "UNPAID") && (
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100">
