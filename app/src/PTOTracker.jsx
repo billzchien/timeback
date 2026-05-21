@@ -1394,6 +1394,9 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           var newDates = getDatesInRange(dragRef.current.anchor, key);
           dragRef.current.current = key;
           dragRef.current.hasMoved = dragRef.current.anchor !== key;
+          if (dragRef.current.dragMode !== "unlock") {
+            newDates = newDates.filter(function(k) { return !lockedDates[k]; });
+          }
           if (dragRef.current.dragMode === "add") {
             var culAvail = Math.max(0, stats.culRemaining);
             var ptoAvail = Math.max(0, stats.totalAvailDays);
