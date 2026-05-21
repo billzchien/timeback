@@ -151,6 +151,12 @@ function GuideTab() {
         <li>Click any empty weekday to plan a day — PTO or Cultural Day</li>
         <li>Click a planned day to clear it</li>
       </ul>
+      <h2 style={h2}>Plan multiple days off</h2>
+      <ul style={ul}>
+        <li>Click and drag across empty weekdays to plan a range of days at once</li>
+        <li>Drag across already-planned days to remove them all at once</li>
+        <li>Cultural Days are used first</li>
+      </ul>
       <h2 style={h2}>Understand your balance</h2>
       <ul style={ul}>
         <li>The PTO balance at the top shows the available PTO days from today through the end of the currently selected calendar year</li>
