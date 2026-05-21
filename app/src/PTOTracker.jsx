@@ -463,7 +463,7 @@ function AnimatedNumber({ value, style }) {
   );
 }
 
-export default function PTOTracker({ user }) {
+export default function PTOTracker({ user, initialSettings }) {
   var [theme, setTheme] = useState("system");
   var [systemDark, setSystemDark] = useState(function() {
     return typeof window !== "undefined" && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -482,7 +482,7 @@ export default function PTOTracker({ user }) {
   var resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme;
   applyTheme(resolvedTheme);
 
-  return <PTOTrackerApp user={user} theme={theme} setTheme={setTheme} />;
+  return <PTOTrackerApp user={user} theme={theme} setTheme={setTheme} initialSettings={initialSettings} />;
 }
 
 function oooEase(x) {
@@ -518,7 +518,8 @@ function smoothScrollTo(container, targetEl, duration) {
   requestAnimationFrame(tick);
 }
 
-function PTOTrackerApp({ user, theme, setTheme }) {
+function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
+  var demoMode = !!initialSettings;
   var minViewYear = Math.max(2026, new Date().getFullYear() - 5);
   var [fadeIn, setFadeIn] = useState(false);
   var [days, setDays] = useState(DEFAULT_DATA);
@@ -596,7 +597,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
       mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme
     };
     if (overrides) Object.assign(data, overrides);
-    supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
+    if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
   }
 
   useEffect(function() { daysRef.current = days; }, [days]);
@@ -675,6 +676,18 @@ function PTOTrackerApp({ user, theme, setTheme }) {
 
   useEffect(function() {
     async function loadData() {
+      if (demoMode) {
+        var p = initialSettings;
+        if (p.bal !== undefined) setBal(p.bal);
+        if (p.balDate) setBalDate(p.balDate);
+        if (p.culBal !== undefined) setCulBal(p.culBal);
+        if (p.userName) setUserName(p.userName);
+        if (p.editCL) setEditCL(p.editCL);
+        if (p.startStr) setStartStr(p.startStr);
+        if (p.mlDateStr) setMlDateStr(p.mlDateStr);
+        setLoaded(true);
+        return;
+      }
       try {
         var res = await supabase.from('pto_days').select('*').eq('user_id', user.id);
         if (!res.error && res.data && res.data.length > 0) {
@@ -722,8 +735,8 @@ function PTOTrackerApp({ user, theme, setTheme }) {
         if (prev[date] !== curr[date]) toUpsert.push({ date: date, type: curr[date] });
       });
       var toDelete = Object.keys(prev).filter(function(date) { return !(date in curr); });
-      if (toUpsert.length > 0) await supabase.from('pto_days').upsert(toUpsert.map(function(r) { return Object.assign({ user_id: user.id }, r); }));
-      if (toDelete.length > 0) await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', toDelete);
+      if (!demoMode && toUpsert.length > 0) await supabase.from('pto_days').upsert(toUpsert.map(function(r) { return Object.assign({ user_id: user.id }, r); }));
+      if (!demoMode && toDelete.length > 0) await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', toDelete);
       prevDaysRef.current = Object.assign({}, curr);
     }
     syncDays();
@@ -734,7 +747,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
     var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme };
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
-      supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
+      if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
     }
   }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme]);
 
@@ -1797,7 +1810,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
             {panelTab === "settings" ? (
               <div style={{ paddingTop: isMobile ? 28 : 40 }}>
                 {/* INFO section — first: no top border */}
-                <div style={{ marginBottom: 48 }}>
+                {!demoMode ? <div style={{ marginBottom: 48 }}>
                   <div style={{ ...T.label.base, color: S.textSubtle, marginBottom: 12 }}>Profile</div>
                   <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "name" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
@@ -1833,10 +1846,10 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                         onBlur={function() { setFocusedField(null); }} />
                     </div>
                   </div>
-                </div>
+                </div> : null}
 
                 {/* CURRENT BALANCE section */}
-                <div style={{ marginBottom: 48 }}>
+                {!demoMode ? <div style={{ marginBottom: 48 }}>
                   <div style={{ ...T.label.base, color: S.textSubtle, marginBottom: 12 }}>Current Balance</div>
                   <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                     <div style={{ flex: 1, background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", border: focusedField === "bal" ? "0.5px solid " + S.textSubtle : "0.5px solid transparent" }}>
@@ -1855,7 +1868,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                         onBlur={function() { setFocusedField(null); }} />
                     </div>
                   </div>
-                </div>
+                </div> : null}
 
                 {/* CALENDAR VIEW section */}
                 <div style={{ marginBottom: 48 }}>
@@ -1885,7 +1898,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                       style={{ background: S.surface, borderRadius: 16, height: 76, padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center", cursor: "pointer" }}>
                       <div style={{ ...T.label.sm, color: S.textSubtle, marginBottom: 8 }}>Show US Holidays</div>
                       <div style={{ ...T.body.base }}>
-                        <span style={{ color: showHolidays === "acn" ? S.text : S.textSubtle, fontWeight: showHolidays === "acn" ? 500 : 400 }}>ACN only</span>
+                        <span style={{ color: showHolidays === "acn" ? S.text : S.textSubtle, fontWeight: showHolidays === "acn" ? 500 : 400 }}>{demoMode ? "Company only" : "ACN only"}</span>
                         <span style={{ color: S.textSubtle, margin: "0 4px", fontWeight: 400 }}>/</span>
                         <span style={{ color: showHolidays === "all" ? S.text : S.textSubtle, fontWeight: showHolidays === "all" ? 500 : 400 }}>All holidays</span>
                       </div>
@@ -1921,7 +1934,7 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                     onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
                     onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
                   >About</a>
-                  <div
+                  {!demoMode && <div
                     style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content" }}
                     onClick={async function() {
                       if (!window.confirm("Delete your account and all data? This cannot be undone.")) return;
@@ -1938,13 +1951,19 @@ function PTOTrackerApp({ user, theme, setTheme }) {
                     }}
                     onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
                     onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
-                  >Delete Account</div>
-                  <div
-                    style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content" }}
-                    onClick={function() { supabase.auth.signOut(); }}
-                    onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
-                    onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
-                  >Log Out</div>
+                  >Delete Account</div>}
+                  {demoMode
+                    ? <a href="/" style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content", textDecoration: "none" }}
+                        onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
+                        onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+                      >Sign Up</a>
+                    : <div
+                        style={{ ...T.label.base, color: S.textSubtle, cursor: "pointer", width: "fit-content" }}
+                        onClick={function() { supabase.auth.signOut(); }}
+                        onMouseEnter={function(e) { e.currentTarget.style.textDecoration = "underline"; e.currentTarget.style.textUnderlineOffset = "3px"; }}
+                        onMouseLeave={function(e) { e.currentTarget.style.textDecoration = "none"; }}
+                      >Log Out</div>
+                  }
                 </div>
               </div>
             ) : null}

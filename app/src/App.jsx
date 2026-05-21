@@ -75,8 +75,8 @@ function LoginScreen() {
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0, userSelect: 'none' }}>
       <style>{FONTS + SPIN_KF}</style>
-      <div style={{ width: BIG_R, height: BIG_R, borderRadius: 999, background: LIME, flexShrink: 0, marginBottom: 32 }} />
-      <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, color: BLACK, marginBottom: 12, lineHeight: 1, letterSpacing: -1 }}>Timeback</div>
+      <div style={{ width: BIG_R, height: BIG_R, borderRadius: 999, background: LIME, flexShrink: 0, marginBottom: 40 }} />
+      <div style={{ fontFamily: GOUDY, fontStyle: 'italic', fontSize: 50, color: BLACK, marginBottom: 24, lineHeight: 1, letterSpacing: -1 }}>Timeback</div>
       <div style={{ fontFamily: WORK, fontSize: 14, color: BLACK, textAlign: 'center', lineHeight: 1.7, marginBottom: 120 }}>
         A PTO planning tool by{' '}
         <a href="https://www.billchien.net" target="_blank" rel="noopener noreferrer"
@@ -88,7 +88,7 @@ function LoginScreen() {
       </div>
       <button onClick={handleGoogle} style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        height: 48, padding: '0 24px', borderRadius: 999,
+        height: 48, padding: '0 16px', borderRadius: 999,
         border: '1px solid ' + GRAY15, background: '#fff',
         fontFamily: WORK, fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: BLACK,
         cursor: 'pointer', outline: 'none',
@@ -102,15 +102,31 @@ function LoginScreen() {
         </svg>
         Continue with Google
       </button>
-      <a href="/about/privacy" style={{
-        position: 'fixed', bottom: 20, left: 0, right: 0,
-        textAlign: 'center',
-        fontFamily: WORK, fontSize: 11, fontWeight: 400, textTransform: 'uppercase', letterSpacing: 1,
-        color: GRAY45, textDecoration: 'none',
-      }}
-        onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
-        onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
-      >Privacy Policy</a>
+      <div style={{ position: 'fixed', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+        <a href="/about" style={{
+          fontFamily: WORK, fontSize: 11, fontWeight: 400, textTransform: 'uppercase', letterSpacing: 1,
+          color: GRAY45, textDecoration: 'none',
+        }}
+          onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
+        >Story</a>
+        <span style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, userSelect: 'none' }}>·</span>
+        <a href="/demo" style={{
+          fontFamily: WORK, fontSize: 11, fontWeight: 400, textTransform: 'uppercase', letterSpacing: 1,
+          color: GRAY45, textDecoration: 'none',
+        }}
+          onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
+        >Try Out</a>
+        <span style={{ fontFamily: WORK, fontSize: 11, color: GRAY45, userSelect: 'none' }}>·</span>
+        <a href="/about/privacy" style={{
+          fontFamily: WORK, fontSize: 11, fontWeight: 400, textTransform: 'uppercase', letterSpacing: 1,
+          color: GRAY45, textDecoration: 'none',
+        }}
+          onMouseEnter={function(e) { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.textUnderlineOffset = '3px'; }}
+          onMouseLeave={function(e) { e.currentTarget.style.textDecoration = 'none'; }}
+        >Privacy Policy</a>
+      </div>
     </div>
   );
 }
@@ -294,6 +310,22 @@ var PREVIEW_USER = {
   user_metadata: { full_name: 'Bill Chien' },
 };
 
+var DEMO_USER = {
+  id: 'demo',
+  email: 'demo@timeback.fyi',
+  user_metadata: { full_name: 'You' },
+};
+
+var DEMO_SETTINGS = {
+  userName: 'You',
+  editCL: '9',
+  bal: 80,
+  balDate: new Date().toISOString().slice(0, 10),
+  culBal: 2,
+  startStr: '2022-06-01',
+  mlDateStr: '',
+};
+
 export default function Router() {
   var previewScreen = new URLSearchParams(window.location.search).get('preview');
   if (previewScreen === 'login')      return <LoginScreen />;
@@ -302,6 +334,7 @@ export default function Router() {
 
   var path = window.location.pathname;
   if (path === '/about' || path.startsWith('/about/')) return <About />;
+  if (path === '/demo') return <PTOTracker user={DEMO_USER} initialSettings={DEMO_SETTINGS} />;
 
   return <AuthApp />;
 }
