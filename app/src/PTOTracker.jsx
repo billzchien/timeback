@@ -1423,7 +1423,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           boxShadow: isAct ? "0 0 0 0.5px " + S.border : "none",
           transition: isDragPreview ? "none" : "background 0.15s, box-shadow 0.15s",
           animation: justToggled[key] ? "dayCellPop 100ms cubic-bezier(0.4, 0, 0, 1) both" : "none",
-          opacity: isDragRemovePreview ? 0.2 : isDragCmdPreview ? 0.35 : isDragLockPreview ? 0.35 : (isDragPreview && dragMode === "add") ? 0.6 : 1,
+          opacity: isDragRemovePreview ? 0.2 : isDragCmdPreview ? 0.35 : (isDragPreview && dragMode === "add") ? 0.6 : 1,
         }} />
         {(type === "PLAN_UNPAID" || type === "UNPAID") && (
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }} viewBox="0 0 100 100">
@@ -1436,8 +1436,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           </svg>
         )}
         <span style={{ position: "relative", color: cellColor, transition: "color 0.15s" }}>{day}</span>
-        {lockedDates[key] && (
-          <div style={{ position: "absolute", width: 1.5, height: 1.5, borderRadius: 999, background: cellColor, left: "50%", transform: "translateX(-50%)", top: "calc(50% + 9px)", pointerEvents: "none" }} />
+        {(lockedDates[key] || (isDragLockPreview && dragMode === "lock")) && (
+          <div style={{ position: "absolute", width: 1.5, height: 1.5, borderRadius: 999, background: cellColor, left: "50%", transform: "translateX(-50%)", top: "calc(50% + 9px)", pointerEvents: "none", opacity: isDragLockPreview ? 0.4 : 1 }} />
         )}
         {isAct ? (
           <div onClick={function(e) { e.stopPropagation(); }} style={{
