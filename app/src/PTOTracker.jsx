@@ -150,7 +150,7 @@ var T = {
 
   display: {
     lg: { fontFamily: goudy, fontStyle: "italic", fontSize: 50, lineHeight: 1, letterSpacing: -1 },
-    md: { fontFamily: goudy, fontStyle: "italic", fontSize: 22 },
+    md: { fontFamily: goudy, fontStyle: "italic", fontSize: 26 },
   },
 
   num:     { fontFamily: grotesk, fontSize: 20, fontWeight: 500 },
