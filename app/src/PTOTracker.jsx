@@ -1521,8 +1521,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
 
       {/* FY26 Rollover Policy Modal */}
       {showFy26Modal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "rgba(0,0,0,0.4)" }}>
-          <div style={{ background: S.bg, borderRadius: 40, padding: 24, maxWidth: 380, width: "100%", boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "popupBounce 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
+        <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 2000, background: "rgba(0,0,0,0.4)" }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: S.bg, borderRadius: 40, padding: 24, width: 380, boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "popupBounce 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
             onClick={function(e) { e.stopPropagation(); }}>
             <div style={{ ...T.display.lg, color: S.text, marginBottom: 40 }}>News</div>
             <div style={{ marginBottom: 40 }}>
