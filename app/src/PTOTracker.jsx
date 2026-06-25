@@ -1522,7 +1522,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       {/* FY26 Rollover Policy Modal */}
       {showFy26Modal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 2000, background: "rgba(0,0,0,0.4)" }}>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: S.bg, borderRadius: 40, padding: 24, width: 380, boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "popupBounce 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translateX(-50%) translateY(-50%)", background: S.bg, borderRadius: 40, padding: 24, width: 380, boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "modalIn 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
             onClick={function(e) { e.stopPropagation(); }}>
             <div style={{ ...T.display.lg, color: S.text, marginBottom: 40 }}>News</div>
             <div style={{ marginBottom: 40 }}>
@@ -2376,6 +2376,10 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           0%   { transform: scale(0.9); }\
           70%  { transform: scale(1.2); }\
           100% { transform: scale(1); }\
+        }\
+        @keyframes modalIn {\
+          0%   { opacity: 0; transform: translateX(-50%) translateY(-50%) scale(0.8); }\
+          100% { opacity: 1; transform: translateX(-50%) translateY(-50%) scale(1); }\
         }\
         @keyframes popupBounce {\
           0%   { opacity: 0; transform: translateX(-50%) scale(0.9); }\
