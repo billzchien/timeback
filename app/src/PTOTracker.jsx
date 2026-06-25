@@ -596,6 +596,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
   var [weekStart, setWeekStart] = useState("sunday");
   var [showHolidays, setShowHolidays] = useState("acn");
   var [calFading, setCalFading] = useState(false);
+  var [fy26Rollover, setFy26Rollover] = useState(null); // null = not yet decided, true = applies, false = CA/CO/MT/NE exception
+  var [showFy26Modal, setShowFy26Modal] = useState(false);
   var [modKeyDown, setModKeyDown] = useState(false);
   var didDragRef = useRef(false);
   var dragRef = useRef({ isDragging: false, anchor: null, hasMoved: false, dates: [] });
@@ -803,6 +805,12 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           if (p2.weekStart) setWeekStart(p2.weekStart);
           if (p2.showHolidays) setShowHolidays(p2.showHolidays);
           if (p2.theme === "light" || p2.theme === "dark" || p2.theme === "system") setTheme(p2.theme);
+          if (p2.fy26Rollover !== undefined) {
+            setFy26Rollover(p2.fy26Rollover);
+          } else {
+            // First time seeing this user after policy — show the modal (only before Jan 1, 2027)
+            if (new Date() < new Date(2027, 0, 1)) setShowFy26Modal(true);
+          }
         }
       } catch(e) {}
       setLoaded(true);
@@ -830,12 +838,12 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
 
   useEffect(function() {
     if (!loaded) return;
-    var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme };
+    var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme, fy26Rollover: fy26Rollover };
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
       if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function() {});
     }
-  }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme]);
+  }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme, fy26Rollover]);
 
   // Sync edit fields when settings tab opens
   useEffect(function() {
@@ -932,7 +940,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           var k = entry[0], t = entry[1];
           if (t === "PTO") { var d = new Date(k); if (d > segStart && d <= nextFYEnd) runBal -= HOURS_PER_DAY; }
         });
-        runBal = Math.min(runBal, 200);
+        if (!(fy26Rollover === true && nextFYEnd.getFullYear() === 2026)) runBal = Math.min(runBal, 200);
         segStart = nextFYEnd;
         nextFYEnd = new Date(nextFYEnd.getFullYear() + 1, 7, 31);
       }
@@ -1000,7 +1008,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       }
     });
     var balanceAtFYEnd = currentBal + accToBalFYEnd - ptoBeforeBalFYEnd * HOURS_PER_DAY;
-    var carriedOver = Math.min(balanceAtFYEnd, 200);
+    var fy26CapExempt = fy26Rollover === true && balFYEnd.getFullYear() === 2026;
+    var carriedOver = fy26CapExempt ? balanceAtFYEnd : Math.min(balanceAtFYEnd, 200);
 
     // eoy / avail: FY-walk from current FY end to fyEnd, capping at 200 at each Aug 31
     var eoy, avail;
@@ -1022,7 +1031,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           if (t === "PLAN") { var d = new Date(k); if (d > curEoyBound && d <= eoySegEnd) runEoy -= HOURS_PER_DAY; }
         });
         if (eoySegEnd >= fyEnd) break;
-        runEoy = Math.min(runEoy, 200);
+        if (!(fy26Rollover === true && nextEoyBound.getFullYear() === 2026)) runEoy = Math.min(runEoy, 200);
         curEoyBound = nextEoyBound;
       }
       eoy = runEoy;
@@ -1056,7 +1065,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           if (t === "PLAN") { var d = new Date(k); if (d > curFYEnd && d <= segEnd) runBal -= HOURS_PER_DAY; }
         });
         if (segEnd >= EOCY) break;
-        runBal = Math.min(runBal, 200);
+        if (!(fy26Rollover === true && nextFYEnd.getFullYear() === 2026)) runBal = Math.min(runBal, 200);
         curFYEnd = nextFYEnd;
       }
       eocyDays = Math.floor(runBal / HOURS_PER_DAY);
@@ -1509,6 +1518,33 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       {active && <div onClick={function() { setActive(null); }} style={{ position: "fixed", inset: 0, zIndex: 99 }} />}
 
       {toast ? <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: S.text, color: S.bg, padding: "10px 20px", borderRadius: 999, ...T.body.sm, zIndex: 1000, whiteSpace: "nowrap", animation: toastVisible ? "toastIn 200ms cubic-bezier(0.4, 0, 0, 1) both" : "toastOut 200ms cubic-bezier(0.4, 0, 0, 1) both" }}>{toast}</div> : null}
+
+      {/* FY26 Rollover Policy Modal */}
+      {showFy26Modal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "rgba(0,0,0,0.4)" }}>
+          <div style={{ background: S.bg, borderRadius: 40, padding: 24, maxWidth: 380, width: "100%", boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "popupBounce 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
+            onClick={function(e) { e.stopPropagation(); }}>
+            <div style={{ ...T.display.lg, color: S.text, marginBottom: 40 }}>News</div>
+            <div style={{ marginBottom: 40 }}>
+              <p style={{ ...T.body.alt, color: S.text, lineHeight: 1.6, margin: "0 0 1em 0" }}>Accenture is removing the 200-hr rollover cap this fiscal year for US and Canada employees. Your full balance could carry into FY27.</p>
+              <p style={{ ...T.body.base, color: S.text, lineHeight: 1.6, margin: "0 0 1em 0" }}>This policy does not apply in California, Colorado, Montana, and Nebraska, where local law governs.</p>
+              <p style={{ ...T.body.base, color: S.text, lineHeight: 1.6, margin: 0 }}>Are you based in CA, CO, MT, or NE?</p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={function() { setFy26Rollover(false); setShowFy26Modal(false); userChangedSettingsRef.current = true; }}
+                style={{ flex: 1, height: 52, borderRadius: 999, border: "0.5px solid " + S.border, background: S.bg, color: S.text, cursor: "pointer", ...T.label.alt }}>
+                Yes, I am
+              </button>
+              <button
+                onClick={function() { setFy26Rollover(true); setShowFy26Modal(false); userChangedSettingsRef.current = true; }}
+                style={{ flex: 1, height: 52, borderRadius: 999, border: "none", background: S.text, color: S.bg, cursor: "pointer", ...T.label.alt }}>
+                No, apply it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Panel toggle - 4 dot grid (fixed position, desktop only) */}
       {!isMobile && (
@@ -2012,6 +2048,33 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
                     </div>
                   </div>
                 </div> : null}
+
+                {/* FY26 ROLLOVER section — hidden after Jan 1, 2027 */}
+                {!demoMode && new Date() < new Date(2027, 0, 1) && fy26Rollover !== null ? (
+                  <div style={{ marginBottom: 48 }}>
+                    <div style={{ ...T.label.base, color: S.textSubtle, marginBottom: 12 }}>Policy</div>
+                    <div
+                      onClick={function() {
+                        var next = fy26Rollover === true ? false : true;
+                        setFy26Rollover(next);
+                        userChangedSettingsRef.current = true;
+                      }}
+                      style={{ background: S.surface, borderRadius: 16, padding: "14px 16px", cursor: "pointer" }}>
+                      <div style={{ ...T.label.sm, color: S.textSubtle, marginBottom: 6 }}>FY26 No Rollover Cap</div>
+                      <div style={{ ...T.body.base, display: "flex", alignItems: "center" }}>
+                        <span style={{ color: fy26Rollover === true ? S.text : S.textSubtle, fontWeight: fy26Rollover === true ? 500 : 400 }}>Applies to me</span>
+                        <span style={{ color: S.textSubtle, margin: "0 6px" }}>/</span>
+                        <span
+                          style={{ color: fy26Rollover === false ? S.text : S.textSubtle, fontWeight: fy26Rollover === false ? 500 : 400, position: "relative" }}
+                          onMouseEnter={function(e) { var tt = e.currentTarget.querySelector('.fy26-tooltip'); if (tt) tt.style.opacity = 1; }}
+                          onMouseLeave={function(e) { var tt = e.currentTarget.querySelector('.fy26-tooltip'); if (tt) tt.style.opacity = 0; }}>
+                          Doesn’t apply to me
+                          <span className="fy26-tooltip" style={{ position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: S.bg, color: S.textSubtle, padding: "6px 12px", borderRadius: 10, ...T.body.sm, pointerEvents: "none", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(0,0,0,0.08)", border: "0.5px solid " + S.border, opacity: 0, transition: "opacity 0.15s", zIndex: 10 }}>If you’re based in CA, CO, MT or NE</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* CALENDAR VIEW section */}
                 <div style={{ marginBottom: 48 }}>

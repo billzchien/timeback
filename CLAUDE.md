@@ -209,6 +209,17 @@ S.shadowThumb          → "0 1px 4px rgba(0,0,0,0.12)"  / "0 2px 6px rgba(0,0,0
 
 Theme (Light / Dark / System) in Settings. Default is `system`.
 
+**Modal style** (standard for all modals going forward):
+- Backdrop: `rgba(0,0,0,0.4)`, fixed inset, no dismiss on backdrop click — user must make a choice
+- Card: `borderRadius: 40`, `padding: 24`, `background: S.bg`, `boxShadow: "0 4px 16px rgba(0,0,0,0.08)"` light / `"0 4px 16px rgba(0,0,0,0.4)"` dark
+- Title: `T.display.lg` (Sorts Mill Goudy italic, 50px) — `marginBottom: 40`
+- Body block: `marginBottom: 40` from title, paragraphs use `1em` bottom margin (default), no extra gap between them
+  - Lead paragraph: `T.body.alt` (14px, 500)
+  - Secondary paragraphs: `T.body.base` (14px, 400)
+- Buttons: `height: 52`, `borderRadius: 999`, `gap: 8`, text style `T.label.alt` (11px, 500, uppercase, letterSpacing)
+  - Secondary (left): `border: "0.5px solid " + S.border`, `background: S.bg`, `color: S.text`
+  - Primary (right): `background: S.text`, `color: S.bg`, no border
+
 **Layout:**
 - Sticky header: 2 stats (PTO Days / By Dec 31, CUL Days / As of today) + year nav + panel toggle + divider
 - Calendar grid: `repeat(auto-fill, minmax(260px, 1fr))` — 4 cols desktop, responsive to 1 col
