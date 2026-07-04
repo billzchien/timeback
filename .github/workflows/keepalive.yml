@@ -1,0 +1,17 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '0 0 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -sf \
+            -H "apikey: sb_publishable_VOXYW8OgRTTh6dBeMo2RSQ_GcCKEaoE" \
+            -H "Authorization: Bearer sb_publishable_VOXYW8OgRTTh6dBeMo2RSQ_GcCKEaoE" \
+            "https://agsgdhutsanhqhpcqqan.supabase.co/rest/v1/pto_settings?limit=1"
