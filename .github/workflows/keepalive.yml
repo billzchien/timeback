@@ -2,16 +2,18 @@ name: Supabase Keepalive
 
 on:
   schedule:
-    - cron: '0 0 */2 * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase
+      - name: Write keepalive timestamp
         run: |
-          curl -sf \
+          curl -sf -X PATCH \
             -H "apikey: sb_publishable_VOXYW8OgRTTh6dBeMo2RSQ_GcCKEaoE" \
             -H "Authorization: Bearer sb_publishable_VOXYW8OgRTTh6dBeMo2RSQ_GcCKEaoE" \
-            "https://agsgdhutsanhqhpcqqan.supabase.co/rest/v1/pto_settings?limit=1"
+            -H "Content-Type: application/json" \
+            -d "{\"pinged_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" \
+            "https://agsgdhutsanhqhpcqqan.supabase.co/rest/v1/keepalive?id=eq.1"
