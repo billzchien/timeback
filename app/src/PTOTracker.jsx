@@ -855,7 +855,9 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
         if (toDelete.length > 0) delErr = (await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', toDelete)).error;
         if (upErr || delErr) {
           // Leave prevDaysRef as-is so the failed diff is retried on the next change
-          notify("Couldn't save — check your connection");
+          var errDetail = (upErr || delErr).message || "check your connection";
+          console.error("pto_days sync failed:", upErr || delErr);
+          notify("Couldn't save — " + errDetail);
           return;
         }
       }
