@@ -180,7 +180,9 @@ function OnboardingScreen({ user, onComplete }) {
     if (!startStr)     errs.start   = true;
     if (!mlDateStr)    errs.ml      = true;
     if (bal === '')    errs.bal     = true;
-    if (!balDate)      errs.balDate = true;
+    // Accrual pay periods are only generated from 2025 on — an older snapshot
+    // date would silently miss accruals, so block it.
+    if (!balDate || balDate < '2025-01-01') errs.balDate = true;
     if (culBal === '') errs.culBal  = true;
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
@@ -191,7 +193,12 @@ function OnboardingScreen({ user, onComplete }) {
       weekStart: 'sunday', showHolidays: 'acn', theme: 'system',
       approvedGroups: {}, lockedDates: {},
     };
-    await supabase.from('pto_settings').upsert({ user_id: user.id, data: data });
+    var res = await supabase.from('pto_settings').upsert({ user_id: user.id, data: data });
+    if (res.error) {
+      setSaving(false);
+      setErrors({ submit: true });
+      return;
+    }
     onComplete();
   }
 
@@ -243,6 +250,11 @@ function OnboardingScreen({ user, onComplete }) {
               <OBDateField value={balDate} onChange={function(v) { setBalDate(v); clearErr('balDate'); }} onFocus={function() { setFocused('balDate'); }} onBlur={function() { setFocused(null); }} />
             </div>
           </div>
+          {balDate && balDate < '2025-01-01' ? (
+            <p style={{ fontFamily: WORK, fontSize: 12, color: CORAL, margin: '0 0 8px' }}>
+              Please use a balance from 2025 or later — grab the latest from your most recent pay statement.
+            </p>
+          ) : null}
           <div style={tile('culBal')}>
             <div style={lbl}>Cultural Days Remaining</div>
             <input type="number" value={culBal} min={0} max={2} placeholder="2" className="tb-ob" onChange={function(e) { setCulBal(e.target.value); clearErr('culBal'); }}
@@ -269,6 +281,11 @@ function OnboardingScreen({ user, onComplete }) {
             ? <div style={{ width: 18, height: 18, border: '1px solid ' + INK, borderTopColor: 'transparent', borderRadius: 999, animation: 'tbSpin 0.8s linear infinite' }} />
             : 'Start Planning'}
         </button>
+        {errors.submit ? (
+          <p style={{ fontFamily: WORK, fontSize: 12, color: CORAL, textAlign: 'center', margin: '12px 0 0' }}>
+            Couldn&rsquo;t save — check your connection and try again.
+          </p>
+        ) : null}
       </div>
     </div>
   );

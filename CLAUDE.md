@@ -127,6 +127,9 @@ This ensures a user whose balance would have been capped in a prior FY doesn't c
 
 Unpaid leave excluded from all balance calculations.
 
+### CUL snapshot semantics
+`culBal` (onboarding "Cultural Days Remaining") already reflects cultural days used before the snapshot date. Like PTO, only CUL days dated **after** `balDate` count against `culBal`; in later years the baseline is `CUL_DAYS_TOTAL` and all of that year's CUL days count. Backfilling pre-snapshot CUL days is therefore safe. The snapshot date is blocked before Jan 1 2025 (onboarding + settings) because `PAY_PERIOD_ENDS` generation starts at 2025.
+
 ### Past-day normalization
 On load (real-user path, not demo mode), planned days whose date has passed are converted to their used types (`PLAN`→`PTO`, `PLAN_CUL`→`CUL`, `PLAN_UNPAID`→`UNPAID`) and synced back to Supabase; locks on past dates are dropped. Without this, past planned days rendered lime forever and were never deducted from the balance (the balance walk only counts `PTO`). A render guard also draws past `PLAN`/`PLAN_CUL` cells as used gray, covering sessions left open across midnight. Same fix exists in PTO Tracker.
 
