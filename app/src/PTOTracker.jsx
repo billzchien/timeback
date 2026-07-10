@@ -599,6 +599,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
   var [calFading, setCalFading] = useState(false);
   var [fy26Rollover, setFy26Rollover] = useState(null); // null = not yet decided, true = applies, false = CA/CO/MT/NE exception
   var [showFy26Modal, setShowFy26Modal] = useState(false);
+  var [showUpdateModal, setShowUpdateModal] = useState(false);
+  var [seenSaveFixNote, setSeenSaveFixNote] = useState(false);
   var [modKeyDown, setModKeyDown] = useState(false);
   var didDragRef = useRef(false);
   var dragRef = useRef({ isDragging: false, anchor: null, hasMoved: false, dates: [] });
@@ -619,7 +621,8 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     var data = {
       bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL,
       approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr,
-      mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme
+      mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme,
+      fy26Rollover: fy26Rollover, seenSaveFixNote: seenSaveFixNote
     };
     if (overrides) Object.assign(data, overrides);
     if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }, { onConflict: 'user_id' }).then(function(res) {
@@ -831,6 +834,12 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
             // First time seeing this user after policy — show the modal (only before Jan 1, 2027)
             if (new Date() < new Date(2027, 0, 1)) setShowFy26Modal(true);
           }
+          if (p2.seenSaveFixNote) {
+            setSeenSaveFixNote(true);
+          } else {
+            // One-time note about the July 2026 save fix (only before Oct 1, 2026)
+            if (new Date() < new Date(2026, 9, 1)) setShowUpdateModal(true);
+          }
         }
       } catch(e) {}
       setLoaded(true);
@@ -871,14 +880,14 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
 
   useEffect(function() {
     if (!loaded) return;
-    var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme, fy26Rollover: fy26Rollover };
+    var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme, fy26Rollover: fy26Rollover, seenSaveFixNote: seenSaveFixNote };
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
       if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }, { onConflict: 'user_id' }).then(function(res) {
         if (res && res.error) notify("Couldn't save settings — check your connection");
       });
     }
-  }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme, fy26Rollover]);
+  }, [bal, balDate, culBal, loaded, userName, editCL, approvedGroups, lockedDates, startStr, mlDateStr, weekStart, showHolidays, theme, fy26Rollover, seenSaveFixNote]);
 
   // Sync edit fields when settings tab opens
   useEffect(function() {
@@ -1583,6 +1592,25 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
                 No, apply it
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showUpdateModal && !showFy26Modal && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: 2000, background: "rgba(0,0,0,0.4)" }}>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translateX(-50%) translateY(-50%)", background: S.bg, borderRadius: 40, padding: 24, width: 380, boxShadow: S.bg === P.ink ? "0 4px 16px rgba(0,0,0,0.4)" : "0 4px 16px rgba(0,0,0,0.08)", animation: "modalIn 0.2s cubic-bezier(0.4, 0, 0, 1) both" }}
+            onClick={function(e) { e.stopPropagation(); }}>
+            <div style={{ ...T.display.lg, color: S.text, marginBottom: 40 }}>Update</div>
+            <div style={{ marginBottom: 40 }}>
+              <p style={{ ...T.body.base, color: S.text, lineHeight: 1.3, margin: "0 0 1em 0" }}>We fixed a bug where changes to already-planned days could quietly fail to save. New days weren&rsquo;t affected — but please give your calendar a quick look and re-add anything missing.</p>
+              <p style={{ ...T.body.base, color: S.text, lineHeight: 1.3, margin: "0 0 1em 0" }}>Planned days whose dates have passed now count as used, so your balance may dip a little. That&rsquo;s the corrected number, not a new bug.</p>
+              <p style={{ ...T.body.base, color: S.text, lineHeight: 1.3, margin: 0 }}>And if a save ever fails from now on, you&rsquo;ll see a message right away.</p>
+            </div>
+            <button
+              onClick={function() { setSeenSaveFixNote(true); setShowUpdateModal(false); persistSettings({ seenSaveFixNote: true }); }}
+              style={{ width: "100%", height: 52, borderRadius: 999, border: "none", background: S.text, color: S.bg, cursor: "pointer", ...T.label.alt }}>
+              Got it
+            </button>
           </div>
         </div>
       )}
