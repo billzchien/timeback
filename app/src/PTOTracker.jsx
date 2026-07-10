@@ -776,6 +776,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
         setLoaded(true);
         return;
       }
+      var todayN = new Date(); todayN.setHours(0,0,0,0);
       try {
         var res = await supabase.from('pto_days').select('*').eq('user_id', user.id);
         if (!res.error && res.data && res.data.length > 0) {
@@ -787,8 +788,16 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
             else { oldDates.push(row.date); }
           });
           if (oldDates.length > 0) await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', oldDates);
+          // Planned days whose date has passed become used days, otherwise
+          // they render as planned forever and never deduct from the balance.
+          var PAST_MAP = { PLAN: "PTO", PLAN_CUL: "CUL", PLAN_UNPAID: "UNPAID" };
+          var normalized = {};
+          Object.keys(loaded_days).forEach(function(k) {
+            var t = loaded_days[k];
+            normalized[k] = (PAST_MAP[t] && new Date(k + "T12:00:00") < todayN) ? PAST_MAP[t] : t;
+          });
           prevDaysRef.current = loaded_days;
-          setDays(loaded_days);
+          setDays(normalized);
         }
         var sRes = await supabase.from('pto_settings').select('data').eq('user_id', user.id).single();
         if (!sRes.error && sRes.data) {
@@ -799,7 +808,14 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
           if (p2.userName) setUserName(p2.userName);
           if (p2.editCL) setEditCL(p2.editCL);
           if (p2.approvedGroups) setApprovedGroups(p2.approvedGroups);
-          if (p2.lockedDates) setLockedDates(p2.lockedDates);
+          if (p2.lockedDates) {
+            // Locks only apply to future planned days — drop past ones
+            var liveLocks = {};
+            Object.keys(p2.lockedDates).forEach(function(k) {
+              if (new Date(k + "T12:00:00") >= todayN) liveLocks[k] = true;
+            });
+            setLockedDates(liveLocks);
+          }
           if (p2.startStr) setStartStr(p2.startStr);
           if (p2.mlDateStr) setMlDateStr(p2.mlDateStr);
           if (p2.weekStart) setWeekStart(p2.weekStart);
@@ -1226,8 +1242,9 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     if (isToday) {
       cellBg = S.today;
       cellColor = S.todayText;
-    } else if (type === "PTO" || type === "CUL") {
-      // Used days (past) — match past-weekend treatment
+    } else if (type === "PTO" || type === "CUL" || (isPast && (type === "PLAN" || type === "PLAN_CUL"))) {
+      // Used days (past) — match past-weekend treatment. Past PLAN/PLAN_CUL
+      // render as used too, covering sessions left open across midnight.
       cellBg = S.surfaceAlt;
       cellColor = S.text;
     } else if (type === "PLAN") {

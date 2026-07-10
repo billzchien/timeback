@@ -127,6 +127,9 @@ This ensures a user whose balance would have been capped in a prior FY doesn't c
 
 Unpaid leave excluded from all balance calculations.
 
+### Past-day normalization
+On load (real-user path, not demo mode), planned days whose date has passed are converted to their used types (`PLAN`→`PTO`, `PLAN_CUL`→`CUL`, `PLAN_UNPAID`→`UNPAID`) and synced back to Supabase; locks on past dates are dropped. Without this, past planned days rendered lime forever and were never deducted from the balance (the balance walk only counts `PTO`). A render guard also draws past `PLAN`/`PLAN_CUL` cells as used gray, covering sessions left open across midnight. Same fix exists in PTO Tracker.
+
 ### Smart logic
 - Dynamic PLAN colors: lime if projected balance covers it, coral if not feasible (per-date projected balance check). Coral days are still clickable.
 - Year-aware stats: switching years recalculates everything.
