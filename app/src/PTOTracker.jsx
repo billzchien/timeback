@@ -622,7 +622,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme
     };
     if (overrides) Object.assign(data, overrides);
-    if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function(res) {
+    if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }, { onConflict: 'user_id' }).then(function(res) {
       if (res && res.error) notify("Couldn't save settings — check your connection");
     });
   }
@@ -851,7 +851,10 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
       var toDelete = Object.keys(prev).filter(function(date) { return !(date in curr); });
       if (!demoMode) {
         var upErr = null, delErr = null;
-        if (toUpsert.length > 0) upErr = (await supabase.from('pto_days').upsert(toUpsert.map(function(r) { return Object.assign({ user_id: user.id }, r); }))).error;
+        // onConflict must target the unique(user_id,date) constraint — the
+        // default (primary key `id`) never matches, so updates to existing
+        // rows fail with a duplicate-key error.
+        if (toUpsert.length > 0) upErr = (await supabase.from('pto_days').upsert(toUpsert.map(function(r) { return Object.assign({ user_id: user.id }, r); }), { onConflict: 'user_id,date' })).error;
         if (toDelete.length > 0) delErr = (await supabase.from('pto_days').delete().eq('user_id', user.id).in('date', toDelete)).error;
         if (upErr || delErr) {
           // Leave prevDaysRef as-is so the failed diff is retried on the next change
@@ -871,7 +874,7 @@ function PTOTrackerApp({ user, theme, setTheme, initialSettings }) {
     var data = { bal: bal, balDate: balDate, culBal: culBal, userName: userName, editCL: editCL, approvedGroups: approvedGroups, lockedDates: lockedDates, startStr: startStr, mlDateStr: mlDateStr, weekStart: weekStart, showHolidays: showHolidays, theme: theme, fy26Rollover: fy26Rollover };
     if (userChangedSettingsRef.current) {
       userChangedSettingsRef.current = false;
-      if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }).then(function(res) {
+      if (!demoMode) supabase.from('pto_settings').upsert({ user_id: user.id, data: data }, { onConflict: 'user_id' }).then(function(res) {
         if (res && res.error) notify("Couldn't save settings — check your connection");
       });
     }

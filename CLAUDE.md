@@ -127,6 +127,9 @@ This ensures a user whose balance would have been capped in a prior FY doesn't c
 
 Unpaid leave excluded from all balance calculations.
 
+### Supabase upsert conflict targets
+`pto_days` has a surrogate `id` PK plus `unique(user_id, date)`; `pto_settings` keys on `user_id`. Every upsert MUST pass `onConflict` (`'user_id,date'` / `'user_id'`) — Supabase resolves on the PK by default, so without it updates to existing rows fail with a duplicate-key error. This failed silently for months (inserts worked, type changes didn't) until error toasts were added.
+
 ### CUL snapshot semantics
 `culBal` (onboarding "Cultural Days Remaining") already reflects cultural days used before the snapshot date. Like PTO, only CUL days dated **after** `balDate` count against `culBal`; in later years the baseline is `CUL_DAYS_TOTAL` and all of that year's CUL days count. Backfilling pre-snapshot CUL days is therefore safe. The snapshot date is blocked before Jan 1 2025 (onboarding + settings) because `PAY_PERIOD_ENDS` generation starts at 2025.
 

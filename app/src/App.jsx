@@ -193,7 +193,7 @@ function OnboardingScreen({ user, onComplete }) {
       weekStart: 'sunday', showHolidays: 'acn', theme: 'system',
       approvedGroups: {}, lockedDates: {},
     };
-    var res = await supabase.from('pto_settings').upsert({ user_id: user.id, data: data });
+    var res = await supabase.from('pto_settings').upsert({ user_id: user.id, data: data }, { onConflict: 'user_id' });
     if (res.error) {
       setSaving(false);
       setErrors({ submit: true });
